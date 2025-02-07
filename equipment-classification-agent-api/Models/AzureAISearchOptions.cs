@@ -8,8 +8,10 @@ public class AzureAISearchOptions
 
     [Required]
     public string IndexName { get; set; }
+
     [Required]
     public string SearchServiceEndpoint { get; set; }
+
     [Required]
     public string SearchAdminKey { get; set; }
 }

@@ -7,15 +7,20 @@ public class AzureOpenAIOptions
     public const string AzureOpenAI = "AzureOpenAIOptions";
 
     [Required]
-    public string DeploymentName { get; set; }
+    public string AzureOpenAIDeploymentName { get; set; }
+
     [Required]
-    public string EndPoint { get; set; }
+    public string AzureOpenAIEndPoint { get; set; }
+
     [Required]
-    public string ApiKey { get; set; }
+    public string AzureOpenAIKey { get; set; }
+
     [Required]
     public string AzureOpenAIEmbeddingModel { get; set; }
+
     [Required]
     public string AzureOpenAIEmbeddingDeployment { get; set; }
+
     [Required]
     public string AzureOpenAIEmbeddingDimensions { get; set; }
 }

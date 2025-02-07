@@ -37,10 +37,23 @@ builder.Services.AddOptions<AzureAISearchOptions>()
            .Bind(builder.Configuration.GetSection(AzureAISearchOptions.AzureAISearch))
            .ValidateDataAnnotations();
 
+builder.Services.AddOptions<AzureSQLOptions>()
+           .Bind(builder.Configuration.GetSection(AzureSQLOptions.AzureSQL))
+           .ValidateDataAnnotations();
+
+builder.Services.AddSingleton<IAzureSQLService>(sp =>
+{
+    var azureSQLOptions = sp.GetRequiredService<IOptions<AzureSQLOptions>>();
+    var logger = sp.GetRequiredService<ILogger<AzureSQLService>>();
+    return new AzureSQLService(azureSQLOptions, logger);
+});
+
 builder.Services.AddSingleton<IAzureAISearchService>(sp =>
 {
-    var searchOptions = sp.GetRequiredService<IOptions<AzureAISearchOptions>>();
-    return new AzureAISearchService(searchOptions);
+    var azureAISearchOptions = sp.GetRequiredService<IOptions<AzureAISearchOptions>>();
+    var azureOpenAIOptions = sp.GetRequiredService<IOptions<AzureOpenAIOptions>>();
+    var logger = sp.GetRequiredService<ILogger<AzureAISearchService>>();
+    return new AzureAISearchService(azureAISearchOptions, azureOpenAIOptions, logger);
 });
 
 builder.Services.AddEndpointsApiExplorer();
