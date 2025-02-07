@@ -28,11 +28,13 @@ public class AzureAISearchService : IAzureAISearchService
     private readonly string _azureOpenAIEmbeddingDimensions;
     private readonly string _azureOpenAIEmbeddingModel;
     private readonly string _azureOpenAIEmbeddingDeployment;
+    private readonly IAzureSQLService _azureSQLService;
 
     public AzureAISearchService(
         IOptions<AzureAISearchOptions> azureAISearchOptions, 
         IOptions<AzureOpenAIOptions> azureOpenAIOptions,
-        ILogger<AzureAISearchService> logger)
+        ILogger<AzureAISearchService> logger,
+        IAzureSQLService azureSQLService)
     {
         _searchServiceEndpoint = azureAISearchOptions.Value.SearchServiceEndpoint;
         _searchAdminKey = azureAISearchOptions.Value.SearchAdminKey;
@@ -45,6 +47,7 @@ public class AzureAISearchService : IAzureAISearchService
         _azureOpenAIEmbeddingDeployment = azureOpenAIOptions.Value.AzureOpenAIEmbeddingDeployment;
 
         _logger = logger;
+        _azureSQLService = azureSQLService;
     }
 
     public async Task CreateAISearchIndexAsync()
@@ -132,8 +135,8 @@ public class AzureAISearchService : IAzureAISearchService
         await searchIndexClient.CreateOrUpdateIndexAsync(searchIndex);
     }
 
-    public Task IndexDataAsync()
+    public async Task IndexDataAsync()
     {
-        throw new NotImplementedException();
+        var golfBalls = await _azureSQLService.GetGolfBallsAsync();
     }
 }
