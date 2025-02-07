@@ -132,7 +132,11 @@ public class AzureAISearchService : IAzureAISearchService
             }
         };
 
+        _logger.LogInformation($"Creating index {searchIndex}");
+
         await searchIndexClient.CreateOrUpdateIndexAsync(searchIndex);
+
+        _logger.LogInformation($"Completed creating index {searchIndex}");
     }
 
     public async Task IndexDataAsync()
