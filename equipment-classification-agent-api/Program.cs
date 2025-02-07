@@ -27,8 +27,12 @@ builder.Services.AddApiVersioning(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
-builder.Services.AddOptions<AzureOpenAiOptions>()
-           .Bind(builder.Configuration.GetSection(AzureOpenAiOptions.AzureOpenAI))
+builder.Services.AddOptions<AzureOpenAIOptions>()
+           .Bind(builder.Configuration.GetSection(AzureOpenAIOptions.AzureOpenAI))
+           .ValidateDataAnnotations();
+
+builder.Services.AddOptions<AzureAISearchOptions>()
+           .Bind(builder.Configuration.GetSection(AzureAISearchOptions.AzureAISearch))
            .ValidateDataAnnotations();
 
 builder.Services.AddEndpointsApiExplorer();
