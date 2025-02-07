@@ -1,5 +1,7 @@
 using Asp.Versioning;
 using equipment_classification_agent_api.Models;
+using equipment_classification_agent_api.Services;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +36,12 @@ builder.Services.AddOptions<AzureOpenAIOptions>()
 builder.Services.AddOptions<AzureAISearchOptions>()
            .Bind(builder.Configuration.GetSection(AzureAISearchOptions.AzureAISearch))
            .ValidateDataAnnotations();
+
+builder.Services.AddSingleton<IAzureAISearchService>(sp =>
+{
+    var searchOptions = sp.GetRequiredService<IOptions<AzureAISearchOptions>>();
+    return new AzureAISearchService(searchOptions);
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

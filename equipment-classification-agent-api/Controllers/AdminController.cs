@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using equipment_classification_agent_api.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
 
@@ -10,10 +11,14 @@ namespace equipment_classification_agent_api.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly ILogger<AdminController> _logger;
+    private readonly IAzureAISearchService _azureAISearchService;
 
-    public AdminController(ILogger<AdminController> logger)
+    public AdminController(
+        ILogger<AdminController> logger, 
+        IAzureAISearchService azureAISearchService)
     {
         _logger = logger;
+        _azureAISearchService = azureAISearchService;
     }
 
     [MapToApiVersion("1.0")]

@@ -3,7 +3,11 @@ using Microsoft.Extensions.Options;
 
 namespace equipment_classification_agent_api.Services;
 
-public class AzureAISearchService
+public interface IAzureAISearchService
+{
+}
+
+public class AzureAISearchService : IAzureAISearchService
 {
     const string vectorSearchHnswProfile = "golf-vector-profile";
     const string vectorSearchHnswConfig = "golfHnsw";
