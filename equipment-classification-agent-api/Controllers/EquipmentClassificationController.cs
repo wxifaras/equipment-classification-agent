@@ -1,7 +1,6 @@
 ﻿using Asp.Versioning;
 using equipment_classification_agent_api.Models;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Mime;
 
 namespace equipment_classification_agent_api.Controllers;
 
