@@ -31,9 +31,9 @@ public class AzureAISearchService : IAzureAISearchService
     private readonly IAzureSQLService _azureSQLService;
 
     public AzureAISearchService(
+        ILogger<AzureAISearchService> logger,
         IOptions<AzureAISearchOptions> azureAISearchOptions, 
         IOptions<AzureOpenAIOptions> azureOpenAIOptions,
-        ILogger<AzureAISearchService> logger,
         IAzureSQLService azureSQLService)
     {
         _searchServiceEndpoint = azureAISearchOptions.Value.SearchServiceEndpoint;

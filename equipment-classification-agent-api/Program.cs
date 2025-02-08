@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
 
 // Load configuration from appsettings.json and appsettings.local.json
 builder.Configuration
@@ -53,7 +54,8 @@ builder.Services.AddSingleton<IAzureAISearchService>(sp =>
     var azureAISearchOptions = sp.GetRequiredService<IOptions<AzureAISearchOptions>>();
     var azureOpenAIOptions = sp.GetRequiredService<IOptions<AzureOpenAIOptions>>();
     var logger = sp.GetRequiredService<ILogger<AzureAISearchService>>();
-    return new AzureAISearchService(azureAISearchOptions, azureOpenAIOptions, logger);
+    var azureSqlService = sp.GetRequiredService<IAzureSQLService>();
+    return new AzureAISearchService(logger, azureAISearchOptions, azureOpenAIOptions, azureSqlService);
 });
 
 builder.Services.AddEndpointsApiExplorer();
