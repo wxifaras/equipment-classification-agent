@@ -26,7 +26,7 @@ public class EquipmentClassificationController : ControllerBase
     {
         try
         {
-            if (request.Image == null || request.Image.Length == 0)
+            if (!request.Images.Any())
             {
                 return BadRequest("No file uploaded.");
             }
@@ -42,7 +42,11 @@ public class EquipmentClassificationController : ControllerBase
                 sessionId = request.SessionId;
             }
 
-            _logger.LogInformation($"Uploading image. {request.Image.FileName}");
+            var response = new EquipmentClassificationResponse();
+            foreach (var image in request.Images)
+            {
+                _logger.LogInformation($"Uploading image. {image.FileName}");
+            }
         }
         catch (Exception ex)
         {

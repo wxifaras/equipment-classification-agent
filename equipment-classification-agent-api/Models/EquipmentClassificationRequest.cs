@@ -3,5 +3,5 @@
 public class EquipmentClassificationRequest
 {
     public string SessionId { get; set; }
-    public IFormFile Image { get; set; }
+    public List<IFormFile> Images { get; set; }
 }
