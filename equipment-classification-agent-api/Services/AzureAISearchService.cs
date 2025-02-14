@@ -3,6 +3,10 @@ using Azure;
 using equipment_classification_agent_api.Models;
 using Microsoft.Extensions.Options;
 using Azure.Search.Documents.Indexes.Models;
+using Azure.AI.OpenAI;
+using Azure.Search.Documents;
+using Azure.Search.Documents.Models;
+using OpenAI.Embeddings;
 
 namespace equipment_classification_agent_api.Services;
 
@@ -29,12 +33,15 @@ public class AzureAISearchService : IAzureAISearchService
     private readonly string _azureOpenAIEmbeddingModel;
     private readonly string _azureOpenAIEmbeddingDeployment;
     private readonly IAzureSQLService _azureSQLService;
+    private readonly SearchIndexClient _indexClient;
+    private readonly AzureOpenAIClient _azureOpenAIClient;
+    private readonly SearchClient _searchClient;
 
     public AzureAISearchService(
         ILogger<AzureAISearchService> logger,
         IOptions<AzureAISearchOptions> azureAISearchOptions, 
         IOptions<AzureOpenAIOptions> azureOpenAIOptions,
-        IAzureSQLService azureSQLService)
+        IAzureSQLService azureSQLService, SearchIndexClient indexClient, AzureOpenAIClient azureOpenAIClient, SearchClient searchClient)
     {
         _searchServiceEndpoint = azureAISearchOptions.Value.SearchServiceEndpoint;
         _searchAdminKey = azureAISearchOptions.Value.SearchAdminKey;
@@ -45,6 +52,9 @@ public class AzureAISearchService : IAzureAISearchService
         _azureOpenAIEmbeddingDimensions = azureOpenAIOptions.Value.AzureOpenAIEmbeddingDimensions;
         _azureOpenAIEmbeddingModel = azureOpenAIOptions.Value.AzureOpenAIEmbeddingModel;
         _azureOpenAIEmbeddingDeployment = azureOpenAIOptions.Value.AzureOpenAIEmbeddingDeployment;
+        _indexClient =indexClient;
+        _azureOpenAIClient=azureOpenAIClient;
+        _searchClient=searchClient;
 
         _logger = logger;
         _azureSQLService = azureSQLService;
@@ -52,9 +62,6 @@ public class AzureAISearchService : IAzureAISearchService
 
     public async Task CreateAISearchIndexAsync()
     {
-        var searchIndexClient = new SearchIndexClient(
-        new Uri(_searchServiceEndpoint),
-        new AzureKeyCredential(_searchAdminKey));
 
         SearchIndex searchIndex = new(_indexName)
         {
@@ -79,7 +86,7 @@ public class AzureAISearchService : IAzureAISearchService
                             Metric = "cosine"
                         }
                     }
-                },
+                },//text to vectorized representation
                 Vectorizers =
                 {
                     new AzureOpenAIVectorizer(vectorSearchVectorizer)
@@ -93,7 +100,7 @@ public class AzureAISearchService : IAzureAISearchService
                         }
                     }
                 }
-            },
+            },// Config Semantic Search for better NLP
             SemanticSearch = new()
             {
                 Configurations =
@@ -126,21 +133,51 @@ public class AzureAISearchService : IAzureAISearchService
                 new SearchField("vectorContent", SearchFieldDataType.Collection(SearchFieldDataType.Single))
                 {
                     IsSearchable = true,
-                    VectorSearchDimensions = int.Parse(_azureOpenAIEmbeddingDimensions),
+                    VectorSearchDimensions = int.Parse(_azureOpenAIEmbeddingDimensions!),
                     VectorSearchProfileName = vectorSearchHnswProfile
                 }
             }
         };
 
-        _logger.LogInformation($"Creating index {searchIndex}");
-
-        await searchIndexClient.CreateOrUpdateIndexAsync(searchIndex);
+        await _indexClient.CreateOrUpdateIndexAsync(searchIndex);
 
         _logger.LogInformation($"Completed creating index {searchIndex}");
     }
 
     public async Task IndexDataAsync()
     {
-        var golfBalls = await _azureSQLService.GetGolfBallsAsync();
+        try
+        {
+            var golfBalls = await _azureSQLService.GetGolfBallsAsync();
+
+        if (golfBalls == null || !golfBalls.Any())
+        {
+            throw new ArgumentException("No golf ball data found in SQL.");
+        }
+
+            var embeddingClient = _azureOpenAIClient.GetEmbeddingClient(_azureOpenAIEmbeddingDeployment);
+
+            foreach (var golfBall in golfBalls)
+            {
+                string textForEmbedding = $"Manufacturer: {golfBall.Manufacturer}, " +
+                                          $"Pole Marking: {golfBall.Pole_Marking}, " +
+                                          $"Color: {golfBall.Colour}, " +
+                                          $"Seam Marking: {golfBall.Seam_Marking}";
+
+                OpenAIEmbedding embedding = await embeddingClient.GenerateEmbeddingAsync(textForEmbedding);
+                golfBall.VectorContent = embedding.ToFloats().ToArray().ToList();
+            }
+
+            var batch = IndexDocumentsBatch.Upload(golfBalls);
+
+            var result = await _searchClient.IndexDocumentsAsync(batch);
+            Console.WriteLine($"Indexed {golfBalls.Count} golf balls.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
     }
+
+    
 }

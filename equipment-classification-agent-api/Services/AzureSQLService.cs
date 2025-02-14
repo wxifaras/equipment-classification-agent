@@ -25,7 +25,7 @@ public class AzureSQLService : IAzureSQLService
 
     public async Task<List<GolfBall>> GetGolfBallsAsync()
     {
-        var sql = "SELECT * FROM [dbo].[tblGolfBalls]";
+        var sql = "SELECT manufacturer,usga_lot_num,pole_marking,colour,constCode,ballSpecs,dimples,spin,pole_2,seam_marking,imageUrl FROM [dbo].[tblGolfBalls]";
         var golfBalls = new List<GolfBall>();
 
         using (var connection = new SqlConnection(_connectionString))

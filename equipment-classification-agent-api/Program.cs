@@ -1,7 +1,14 @@
 using Asp.Versioning;
+using Azure.Search.Documents.Indexes;
+using Azure;
 using equipment_classification_agent_api.Models;
 using equipment_classification_agent_api.Services;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection;
+using Azure.AI.OpenAI;
+using Azure.Search.Documents;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +55,31 @@ builder.Services.AddSingleton<IAzureSQLService>(sp =>
     var logger = sp.GetRequiredService<ILogger<AzureSQLService>>();
     return new AzureSQLService(azureSQLOptions, logger);
 });
+builder.Services.AddSingleton(sp =>
+{
+    var azureAISearchOptions = sp.GetRequiredService<IOptions<AzureAISearchOptions>>();
+    var logger = sp.GetRequiredService<ILogger<Program>>();
+
+    logger.LogInformation("Initializing Search Index Client with endpoint: {Endpoint}", azureAISearchOptions.Value.SearchServiceEndpoint);
+    return new SearchIndexClient(new Uri(azureAISearchOptions.Value.SearchServiceEndpoint!), new AzureKeyCredential(azureAISearchOptions.Value.SearchAdminKey!));
+});
+
+builder.Services.AddSingleton(sp =>
+{
+    var logger = sp.GetRequiredService<ILogger<Program>>();
+    var azureOpenAIOptions = sp.GetRequiredService<IOptions<AzureOpenAIOptions>>();
+
+    logger.LogInformation("Initializing OpenAI Client with endpoint: {Endpoint}", azureOpenAIOptions.Value.AzureOpenAIEndPoint);
+    return new AzureOpenAIClient(new Uri(azureOpenAIOptions.Value.AzureOpenAIEndPoint!), new AzureKeyCredential(azureOpenAIOptions.Value.AzureOpenAIKey!));
+});
+
+//Register Search Client
+builder.Services.AddSingleton(sp =>
+{
+    var azureAISearchOptions = sp.GetRequiredService<IOptions<AzureAISearchOptions>>();
+    var indexClient = sp.GetRequiredService<SearchIndexClient>();
+    return indexClient.GetSearchClient(azureAISearchOptions.Value.IndexName);
+});
 
 builder.Services.AddSingleton<IAzureAISearchService>(sp =>
 {
@@ -55,8 +87,14 @@ builder.Services.AddSingleton<IAzureAISearchService>(sp =>
     var azureOpenAIOptions = sp.GetRequiredService<IOptions<AzureOpenAIOptions>>();
     var logger = sp.GetRequiredService<ILogger<AzureAISearchService>>();
     var azureSqlService = sp.GetRequiredService<IAzureSQLService>();
-    return new AzureAISearchService(logger, azureAISearchOptions, azureOpenAIOptions, azureSqlService);
+    var searchIndexClient = sp.GetRequiredService<SearchIndexClient>();
+    var azureOpenAIClient = sp.GetRequiredService<AzureOpenAIClient>();
+    var searchClient = sp.GetRequiredService <SearchClient>();
+    return new AzureAISearchService(logger, azureAISearchOptions, azureOpenAIOptions, azureSqlService, searchIndexClient, azureOpenAIClient, searchClient
+        );
 });
+
+
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
