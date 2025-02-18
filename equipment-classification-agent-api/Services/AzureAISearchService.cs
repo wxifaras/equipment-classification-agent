@@ -6,9 +6,8 @@ using Azure.Search.Documents.Indexes.Models;
 using Azure.AI.OpenAI;
 using Azure.Search.Documents.Models;
 using Azure.Search.Documents;
-using Microsoft.Extensions.Configuration;
 using OpenAI.Embeddings;
-using System;
+using System.Diagnostics;
 
 namespace equipment_classification_agent_api.Services;
 
@@ -160,37 +159,31 @@ public class AzureAISearchService : IAzureAISearchService
 
     public async Task IndexDataAsync(SearchIndex searchIndex)
     {
-        SearchClient searchClient = new SearchClient(new Uri(_searchServiceEndpoint), searchIndex.Name, new AzureKeyCredential(_searchAdminKey));
+        var stopwatch = Stopwatch.StartNew();
+        var searchClient = new SearchClient(new Uri(_searchServiceEndpoint), searchIndex.Name, new AzureKeyCredential(_searchAdminKey));
 
         AzureOpenAIClient _azureOpenAIClient = new(
             new Uri(_azureOpenAIEndpoint),
             new AzureKeyCredential(_azureOpenAIKey));
 
-        try
+        var golfBalls = await _azureSQLService.GetGolfBallsAsync();
+        var embeddingClient = _azureOpenAIClient.GetEmbeddingClient(_azureOpenAIEmbeddingModel);
+
+        foreach (var golfBall in golfBalls)
         {
-            var golfBalls = await _azureSQLService.GetGolfBallsAsync();
-            var embeddingClient = _azureOpenAIClient.GetEmbeddingClient(_azureOpenAIEmbeddingModel);
+            var textForEmbedding = $"Manufacturer: {golfBall.Manufacturer}, " +
+                   $"Pole Marking: {golfBall.Pole_Marking}, " +
+                   $"Color: {golfBall.Colour}, " +
+                   $"Seam Marking: {golfBall.Seam_Marking}";
 
-            foreach (var golfBall in golfBalls)
-            {
-                string textForEmbedding = $"Manufacturer: {golfBall.Manufacturer}, " +
-                                          $"Pole Marking: {golfBall.Pole_Marking}, " +
-                                          $"Color: {golfBall.Colour}, " +
-                                          $"Seam Marking: {golfBall.Seam_Marking}";
-
-                OpenAIEmbedding embedding = await embeddingClient.GenerateEmbeddingAsync(textForEmbedding);
-                golfBall.VectorContent = embedding.ToFloats().ToArray().ToList();
-            }
-
-            var batch = IndexDocumentsBatch.Upload(golfBalls);
-
-            var result = await searchClient.IndexDocumentsAsync(batch);
-            Console.WriteLine($"Indexed {golfBalls.Count} golf balls.");
+            OpenAIEmbedding embedding = await embeddingClient.GenerateEmbeddingAsync(textForEmbedding);
+            golfBall.VectorContent = embedding.ToFloats().ToArray().ToList();
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred: {ex.Message}");
-        }
+
+        var batch = IndexDocumentsBatch.Upload(golfBalls);
+        var result = await searchClient.IndexDocumentsAsync(batch);
+        _logger.LogInformation($"Indexed {golfBalls.Count} golf balls.");
+        stopwatch.Stop();
+        _logger.LogInformation($"Execution Time: {stopwatch.ElapsedMilliseconds} ms");
     }
-
 }
