@@ -1,5 +1,4 @@
 using Azure.Search.Documents.Indexes;
-using Azure;
 using equipment_classification_agent_api.Models;
 using Microsoft.Extensions.Options;
 using Azure.Search.Documents.Indexes.Models;
@@ -25,8 +24,6 @@ public class AzureAISearchService : IAzureAISearchService
     const string semanticSearchConfig = "golf-semantic-config";
 
     private readonly ILogger<AzureAISearchService> _logger;
-    private readonly string _searchServiceEndpoint;
-    private readonly string _searchAdminKey;
     private readonly string _indexName;
     private readonly string _azureOpenAIEndpoint;
     private readonly string _azureOpenAIKey;
@@ -42,10 +39,11 @@ public class AzureAISearchService : IAzureAISearchService
         ILogger<AzureAISearchService> logger,
         IOptions<AzureAISearchOptions> azureAISearchOptions,
         IOptions<AzureOpenAIOptions> azureOpenAIOptions,
-        IAzureSQLService azureSQLService, SearchIndexClient indexClient, AzureOpenAIClient azureOpenAIClient, SearchClient searchClient)
+        IAzureSQLService azureSQLService, 
+        SearchIndexClient indexClient, 
+        AzureOpenAIClient azureOpenAIClient, 
+        SearchClient searchClient)
     {
-        _searchServiceEndpoint = azureAISearchOptions.Value.SearchServiceEndpoint;
-        _searchAdminKey = azureAISearchOptions.Value.SearchAdminKey;
         _indexName = azureAISearchOptions.Value.IndexName;
 
         _azureOpenAIEndpoint = azureOpenAIOptions.Value.AzureOpenAIEndPoint;
@@ -63,7 +61,6 @@ public class AzureAISearchService : IAzureAISearchService
 
     public async Task CreateAISearchIndexAsync()
     {
-
         SearchIndex searchIndex = new(_indexName)
         {
             VectorSearch = new()
@@ -143,7 +140,6 @@ public class AzureAISearchService : IAzureAISearchService
         await _indexClient.CreateOrUpdateIndexAsync(searchIndex);
 
         _logger.LogInformation($"Completed creating index {searchIndex}");
-
     }
 
     public async Task IndexDataAsync()
@@ -151,7 +147,7 @@ public class AzureAISearchService : IAzureAISearchService
         var stopwatch = Stopwatch.StartNew();
         var golfBalls = await _azureSQLService.GetGolfBallsAsync();
 
-        if (golfBalls == null || !golfBalls.Any())
+        if (golfBalls == null || golfBalls.Count == 0)
         {
             throw new ArgumentException("No golf ball data found in SQL.");
         }
@@ -172,7 +168,8 @@ public class AzureAISearchService : IAzureAISearchService
         var batch = IndexDocumentsBatch.Upload(golfBalls);
 
         var result = await _searchClient.IndexDocumentsAsync(batch);
-        Console.WriteLine($"Indexed {golfBalls.Count} golf balls.");
+
+        _logger.LogInformation($"Indexed {golfBalls.Count} golf balls.");
         stopwatch.Stop();
         _logger.LogInformation($"Execution Time: {stopwatch.ElapsedMilliseconds} ms");
     }

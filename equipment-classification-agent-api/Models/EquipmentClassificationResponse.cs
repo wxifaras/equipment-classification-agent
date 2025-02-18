@@ -2,4 +2,5 @@
 
 public class EquipmentClassificationResponse
 {
+    public string SessionId { get; set; }
 }
