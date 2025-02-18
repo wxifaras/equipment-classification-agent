@@ -1,4 +1,4 @@
-﻿using Azure.Search.Documents.Indexes;
+using Azure.Search.Documents.Indexes;
 using Azure;
 using equipment_classification_agent_api.Models;
 using Microsoft.Extensions.Options;
@@ -34,12 +34,15 @@ public class AzureAISearchService : IAzureAISearchService
     private readonly string _azureOpenAIEmbeddingModel;
     private readonly string _azureOpenAIEmbeddingDeployment;
     private readonly IAzureSQLService _azureSQLService;
+    private readonly SearchIndexClient _indexClient;
+    private readonly AzureOpenAIClient _azureOpenAIClient;
+    private readonly SearchClient _searchClient;
 
     public AzureAISearchService(
         ILogger<AzureAISearchService> logger,
         IOptions<AzureAISearchOptions> azureAISearchOptions,
         IOptions<AzureOpenAIOptions> azureOpenAIOptions,
-        IAzureSQLService azureSQLService)
+        IAzureSQLService azureSQLService, SearchIndexClient indexClient, AzureOpenAIClient azureOpenAIClient, SearchClient searchClient)
     {
         _searchServiceEndpoint = azureAISearchOptions.Value.SearchServiceEndpoint;
         _searchAdminKey = azureAISearchOptions.Value.SearchAdminKey;
@@ -50,6 +53,9 @@ public class AzureAISearchService : IAzureAISearchService
         _azureOpenAIEmbeddingDimensions = azureOpenAIOptions.Value.AzureOpenAIEmbeddingDimensions;
         _azureOpenAIEmbeddingModel = azureOpenAIOptions.Value.AzureOpenAIEmbeddingModel;
         _azureOpenAIEmbeddingDeployment = azureOpenAIOptions.Value.AzureOpenAIEmbeddingDeployment;
+        _indexClient =indexClient;
+        _azureOpenAIClient=azureOpenAIClient;
+        _searchClient=searchClient;
 
         _logger = logger;
         _azureSQLService = azureSQLService;
@@ -57,9 +63,6 @@ public class AzureAISearchService : IAzureAISearchService
 
     public async Task<SearchIndex> CreateAISearchIndexAsync()
     {
-        var searchIndexClient = new SearchIndexClient(
-        new Uri(_searchServiceEndpoint),
-        new AzureKeyCredential(_searchAdminKey));
 
         SearchIndex searchIndex = new(_indexName)
         {
@@ -84,7 +87,7 @@ public class AzureAISearchService : IAzureAISearchService
                             Metric = "cosine"
                         }
                     }
-                },
+                },//text to vectorized representation
                 Vectorizers =
                 {
                     new AzureOpenAIVectorizer(vectorSearchVectorizer)
@@ -98,7 +101,7 @@ public class AzureAISearchService : IAzureAISearchService
                         }
                     }
                 }
-            },
+            },// Config Semantic Search for better NLP
             SemanticSearch = new()
             {
                 Configurations =
@@ -142,15 +145,13 @@ public class AzureAISearchService : IAzureAISearchService
                 new SearchField("vectorContent", SearchFieldDataType.Collection(SearchFieldDataType.Single))
                 {
                     IsSearchable = true,
-                    VectorSearchDimensions = int.Parse(_azureOpenAIEmbeddingDimensions),
+                    VectorSearchDimensions = int.Parse(_azureOpenAIEmbeddingDimensions!),
                     VectorSearchProfileName = vectorSearchHnswProfile
                 }
             }
         };
 
-        _logger.LogInformation($"Creating index {searchIndex}");
-
-        await searchIndexClient.CreateOrUpdateIndexAsync(searchIndex);
+        await _indexClient.CreateOrUpdateIndexAsync(searchIndex);
 
         _logger.LogInformation($"Completed creating index {searchIndex}");
 
