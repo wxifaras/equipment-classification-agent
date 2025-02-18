@@ -91,8 +91,7 @@ builder.Services.AddSingleton<IAzureAISearchService>(sp =>
     var searchIndexClient = sp.GetRequiredService<SearchIndexClient>();
     var azureOpenAIClient = sp.GetRequiredService<AzureOpenAIClient>();
     var searchClient = sp.GetRequiredService <SearchClient>();
-    return new AzureAISearchService(logger, azureAISearchOptions, azureOpenAIOptions, azureSqlService, searchIndexClient, azureOpenAIClient, searchClient
-        );
+    return new AzureAISearchService(logger, azureAISearchOptions, azureOpenAIOptions, azureSqlService, searchIndexClient, azureOpenAIClient, searchClient);
 });
 
 builder.Services.AddEndpointsApiExplorer();
