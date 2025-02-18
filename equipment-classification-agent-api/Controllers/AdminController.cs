@@ -1,5 +1,6 @@
 ﻿using Asp.Versioning;
 using equipment_classification_agent_api.Services;
+using Azure.Search.Documents.Indexes.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
 
@@ -38,13 +39,13 @@ public class AdminController : ControllerBase
 
             _logger.LogInformation("Creating AI search index");
 
-            await _azureAISearchService.CreateAISearchIndexAsync();
+            SearchIndex searchIndex = await _azureAISearchService.CreateAISearchIndexAsync();
             
             _logger.LogInformation("AI search index created");
 
             _logger.LogInformation("Indexing data");
 
-            await _azureAISearchService.IndexDataAsync();
+            await _azureAISearchService.IndexDataAsync(searchIndex);
 
             _logger.LogInformation("Data indexed");
 
