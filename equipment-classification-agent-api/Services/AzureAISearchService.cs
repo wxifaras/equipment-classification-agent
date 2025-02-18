@@ -13,8 +13,8 @@ namespace equipment_classification_agent_api.Services;
 
 public interface IAzureAISearchService
 {
-    Task<SearchIndex> CreateAISearchIndexAsync();
-    Task IndexDataAsync(SearchIndex searchIndex);
+    Task CreateAISearchIndexAsync();
+    Task IndexDataAsync();
 }
 
 public class AzureAISearchService : IAzureAISearchService
@@ -60,7 +60,7 @@ public class AzureAISearchService : IAzureAISearchService
         _azureSQLService = azureSQLService;
     }
 
-    public async Task<SearchIndex> CreateAISearchIndexAsync()
+    public async Task CreateAISearchIndexAsync()
     {
 
         SearchIndex searchIndex = new(_indexName)
@@ -143,10 +143,9 @@ public class AzureAISearchService : IAzureAISearchService
 
         _logger.LogInformation($"Completed creating index {searchIndex}");
 
-        return searchIndex;
     }
 
-    public async Task IndexDataAsync(SearchIndex searchIndex)
+    public async Task IndexDataAsync()
     {
         var stopwatch = Stopwatch.StartNew();
         var golfBalls = await _azureSQLService.GetGolfBallsAsync();
