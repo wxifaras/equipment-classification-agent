@@ -49,6 +49,10 @@ builder.Services.AddOptions<AzureSQLOptions>()
            .Bind(builder.Configuration.GetSection(AzureSQLOptions.AzureSQL))
            .ValidateDataAnnotations();
 
+builder.Services.AddOptions<AzureStorageOptions>()
+           .Bind(builder.Configuration.GetSection(AzureStorageOptions.AzureStorage))
+           .ValidateDataAnnotations();
+
 builder.Services.AddSingleton<IAzureSQLService>(sp =>
 {
     var azureSQLOptions = sp.GetRequiredService<IOptions<AzureSQLOptions>>();
