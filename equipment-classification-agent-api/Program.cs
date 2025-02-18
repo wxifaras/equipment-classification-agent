@@ -4,11 +4,8 @@ using Azure;
 using equipment_classification_agent_api.Models;
 using equipment_classification_agent_api.Services;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.DependencyInjection;
 using Azure.AI.OpenAI;
 using Azure.Search.Documents;
-
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -97,8 +94,6 @@ builder.Services.AddSingleton<IAzureAISearchService>(sp =>
     return new AzureAISearchService(logger, azureAISearchOptions, azureOpenAIOptions, azureSqlService, searchIndexClient, azureOpenAIClient, searchClient
         );
 });
-
-
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
