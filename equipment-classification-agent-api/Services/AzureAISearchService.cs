@@ -1,5 +1,4 @@
 using Azure.Search.Documents.Indexes;
-using Azure;
 using equipment_classification_agent_api.Models;
 using Microsoft.Extensions.Options;
 using Azure.Search.Documents.Indexes.Models;
@@ -62,7 +61,6 @@ public class AzureAISearchService : IAzureAISearchService
 
     public async Task CreateAISearchIndexAsync()
     {
-
         SearchIndex searchIndex = new(_indexName)
         {
             VectorSearch = new()
@@ -142,7 +140,6 @@ public class AzureAISearchService : IAzureAISearchService
         await _indexClient.CreateOrUpdateIndexAsync(searchIndex);
 
         _logger.LogInformation($"Completed creating index {searchIndex}");
-
     }
 
     public async Task IndexDataAsync()
@@ -150,7 +147,7 @@ public class AzureAISearchService : IAzureAISearchService
         var stopwatch = Stopwatch.StartNew();
         var golfBalls = await _azureSQLService.GetGolfBallsAsync();
 
-        if (golfBalls == null || !golfBalls.Any())
+        if (golfBalls == null || golfBalls.Count == 0)
         {
             throw new ArgumentException("No golf ball data found in SQL.");
         }
@@ -171,6 +168,7 @@ public class AzureAISearchService : IAzureAISearchService
         var batch = IndexDocumentsBatch.Upload(golfBalls);
 
         var result = await _searchClient.IndexDocumentsAsync(batch);
+
         _logger.LogInformation($"Indexed {golfBalls.Count} golf balls.");
         stopwatch.Stop();
         _logger.LogInformation($"Execution Time: {stopwatch.ElapsedMilliseconds} ms");
