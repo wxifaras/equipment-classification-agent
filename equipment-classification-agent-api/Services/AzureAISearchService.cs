@@ -119,28 +119,17 @@ public class AzureAISearchService : IAzureAISearchService
             },
             Fields =
             {
-                new SimpleField("id", SearchFieldDataType.String) { IsKey = true, IsFilterable = true },
-                new SearchableField("country") { IsFilterable = true },
+                 new SimpleField("id", SearchFieldDataType.String) { IsKey = true, IsFilterable = true },
                 new SearchableField("manufacturer") { IsFilterable = true, IsSortable = true },
                 new SearchableField("usga_lot_num") { IsFilterable = true },
                 new SearchableField("pole_marking") { IsFilterable = true },
-                new SearchableField("pole1_web") { IsFilterable = true },
                 new SearchableField("colour") { IsFilterable = true },
                 new SearchableField("constCode") { IsFilterable = true },
-                new SearchableField("woundcode") { IsFilterable = true },
-                new SearchableField("centercode") { IsFilterable = true },
-                new SearchableField("covercode") { IsFilterable = true },
-                new SearchableField("ballspecs1") { IsFilterable = true },
                 new SearchableField("ballSpecs") { IsFilterable = true },
                 new SimpleField("dimples", SearchFieldDataType.Int32) { IsFilterable = true, IsSortable = true },
                 new SearchableField("spin") { IsFilterable = true },
                 new SearchableField("pole_2") { IsFilterable = true },
-                new SearchableField("pole2_web") { IsFilterable = true },
                 new SearchableField("seam_marking") { IsFilterable = true },
-                new SearchableField("seam1_web") { IsFilterable = true },
-                new SearchableField("seam_2"){ IsFilterable = true },
-                new SearchableField("seam2_web") { IsFilterable = true },
-                new SearchableField("DecisionNumber") { IsFilterable = true },
                 new SimpleField("imageUrl", SearchFieldDataType.String) { IsFilterable = false },
                 new SearchField("vectorContent", SearchFieldDataType.Collection(SearchFieldDataType.Single))
                 {
@@ -161,29 +150,30 @@ public class AzureAISearchService : IAzureAISearchService
     public async Task IndexDataAsync(SearchIndex searchIndex)
     {
         var stopwatch = Stopwatch.StartNew();
-        var searchClient = new SearchClient(new Uri(_searchServiceEndpoint), searchIndex.Name, new AzureKeyCredential(_searchAdminKey));
-
-        AzureOpenAIClient _azureOpenAIClient = new(
-            new Uri(_azureOpenAIEndpoint),
-            new AzureKeyCredential(_azureOpenAIKey));
-
         var golfBalls = await _azureSQLService.GetGolfBallsAsync();
-        var embeddingClient = _azureOpenAIClient.GetEmbeddingClient(_azureOpenAIEmbeddingModel);
+
+        if (golfBalls == null || !golfBalls.Any())
+        {
+            throw new ArgumentException("No golf ball data found in SQL.");
+        }
+
+        var embeddingClient = _azureOpenAIClient.GetEmbeddingClient(_azureOpenAIEmbeddingDeployment);
 
         foreach (var golfBall in golfBalls)
         {
-            var textForEmbedding = $"Manufacturer: {golfBall.Manufacturer}, " +
-                   $"Pole Marking: {golfBall.Pole_Marking}, " +
-                   $"Color: {golfBall.Colour}, " +
-                   $"Seam Marking: {golfBall.Seam_Marking}";
+            string textForEmbedding = $"Manufacturer: {golfBall.Manufacturer}, " +
+                                      $"Pole Marking: {golfBall.Pole_Marking}, " +
+                                      $"Color: {golfBall.Colour}, " +
+                                      $"Seam Marking: {golfBall.Seam_Marking}";
 
             OpenAIEmbedding embedding = await embeddingClient.GenerateEmbeddingAsync(textForEmbedding);
             golfBall.VectorContent = embedding.ToFloats().ToArray().ToList();
         }
 
         var batch = IndexDocumentsBatch.Upload(golfBalls);
-        var result = await searchClient.IndexDocumentsAsync(batch);
-        _logger.LogInformation($"Indexed {golfBalls.Count} golf balls.");
+
+        var result = await _searchClient.IndexDocumentsAsync(batch);
+        Console.WriteLine($"Indexed {golfBalls.Count} golf balls.");
         stopwatch.Stop();
         _logger.LogInformation($"Execution Time: {stopwatch.ElapsedMilliseconds} ms");
     }
