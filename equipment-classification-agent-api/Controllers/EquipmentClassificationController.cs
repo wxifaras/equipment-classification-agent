@@ -43,10 +43,14 @@ public class EquipmentClassificationController : ControllerBase
             }
 
             var response = new EquipmentClassificationResponse();
+
+            // TODO: upload images to Azure Storage
             foreach (var image in request.Images)
             {
                 _logger.LogInformation($"Uploading image. {image.FileName}");
             }
+
+            // TODO: classify images via LLM
         }
         catch (Exception ex)
         {
