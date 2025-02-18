@@ -26,7 +26,7 @@ public class EquipmentClassificationController : ControllerBase
     {
         try
         {
-            if (!request.Images.Any())
+            if (request.Images.Count == 0)
             {
                 return BadRequest("No file uploaded.");
             }
