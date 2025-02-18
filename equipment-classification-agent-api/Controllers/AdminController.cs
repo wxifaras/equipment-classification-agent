@@ -53,7 +53,7 @@ public class AdminController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, string.Empty);
+            _logger.LogError(ex, "Error in CreateAISearchIndex");
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
