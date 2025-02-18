@@ -94,6 +94,13 @@ builder.Services.AddSingleton<IAzureAISearchService>(sp =>
     return new AzureAISearchService(logger, azureAISearchOptions, azureOpenAIOptions, azureSqlService, searchIndexClient, azureOpenAIClient, searchClient);
 });
 
+builder.Services.AddSingleton<AzureStorageService>(sp =>
+{
+    var azureStorageOptions = sp.GetRequiredService<IOptions<AzureStorageOptions>>();
+    var logger = sp.GetRequiredService<ILogger<AzureStorageService>>();
+    return new AzureStorageService(azureStorageOptions,logger);
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
