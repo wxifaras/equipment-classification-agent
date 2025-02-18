@@ -39,13 +39,13 @@ public class AdminController : ControllerBase
 
             _logger.LogInformation("Creating AI search index");
 
-            SearchIndex searchIndex = await _azureAISearchService.CreateAISearchIndexAsync();
+            await _azureAISearchService.CreateAISearchIndexAsync();
             
             _logger.LogInformation("AI search index created");
 
             _logger.LogInformation("Indexing data");
 
-            await _azureAISearchService.IndexDataAsync(searchIndex);
+            await _azureAISearchService.IndexDataAsync();
 
             _logger.LogInformation("Data indexed");
 
