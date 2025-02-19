@@ -1,5 +1,6 @@
 ﻿using Asp.Versioning;
 using equipment_classification_agent_api.Models;
+using equipment_classification_agent_api.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace equipment_classification_agent_api.Controllers;
@@ -10,11 +11,14 @@ namespace equipment_classification_agent_api.Controllers;
 public class EquipmentClassificationController : ControllerBase
 {
     private readonly ILogger<EquipmentClassificationController> _logger;
+    private readonly AzureStorageService _azureStorageService;
 
     public EquipmentClassificationController(
-        ILogger<EquipmentClassificationController> logger)
+        ILogger<EquipmentClassificationController> logger,
+        AzureStorageService azureStorageService)
     {
         _logger = logger;
+        _azureStorageService = azureStorageService;
     }
 
     [MapToApiVersion("1.0")]
@@ -44,10 +48,10 @@ public class EquipmentClassificationController : ControllerBase
 
             var response = new EquipmentClassificationResponse();
 
-            // TODO: upload images to Azure Storage
             foreach (var image in request.Images)
             {
                 _logger.LogInformation($"Uploading image. {image.FileName}");
+               await _azureStorageService.UploadImageAsync(image.OpenReadStream(), image.FileName, sessionId);
             }
 
             // TODO: classify images via LLM

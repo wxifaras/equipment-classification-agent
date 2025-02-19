@@ -10,6 +10,7 @@ namespace equipment_classification_agent_api.Models
         public string StorageConnectionString { get; set; }
 
         [Required]
-        public string ImageContainer { get; set; }
+        public string ImagesContainer { get; set; }
+
     }
 }
