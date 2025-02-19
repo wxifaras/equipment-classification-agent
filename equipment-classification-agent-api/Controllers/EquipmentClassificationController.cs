@@ -12,13 +12,16 @@ public class EquipmentClassificationController : ControllerBase
 {
     private readonly ILogger<EquipmentClassificationController> _logger;
     private readonly AzureStorageService _azureStorageService;
+    private readonly IAzureOpenAIService _azureOpenAIService;
 
     public EquipmentClassificationController(
         ILogger<EquipmentClassificationController> logger,
-        AzureStorageService azureStorageService)
+        AzureStorageService azureStorageService,
+        IAzureOpenAIService azureOpenAIService)
     {
         _logger = logger;
         _azureStorageService = azureStorageService;
+        _azureOpenAIService = azureOpenAIService;
     }
 
     [MapToApiVersion("1.0")]
@@ -54,7 +57,7 @@ public class EquipmentClassificationController : ControllerBase
                await _azureStorageService.UploadImageAsync(image.OpenReadStream(), image.FileName, sessionId);
             }
 
-            // TODO: classify images via LLM
+            await _azureOpenAIService.ExtractImageDetailsAsync(request);
         }
         catch (Exception ex)
         {

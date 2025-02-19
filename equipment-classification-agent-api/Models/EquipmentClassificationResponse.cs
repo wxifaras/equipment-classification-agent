@@ -3,4 +3,5 @@
 public class EquipmentClassificationResponse
 {
     public string SessionId { get; set; }
+    public string AzureAISearchQuery { get; set; }
 }
