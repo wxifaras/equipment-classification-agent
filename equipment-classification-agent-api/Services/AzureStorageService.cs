@@ -1,7 +1,6 @@
 ﻿using equipment_classification_agent_api.Models;
 using Microsoft.Extensions.Options;
 using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
 
 namespace equipment_classification_agent_api.Services;
@@ -28,16 +27,9 @@ public class AzureStorageService
         string folderPath = $"{sesssionId}/{fileName}";
         var blobContainer = _blobServiceClient.GetBlobContainerClient(_containerName);
         var blobClient = blobContainer.GetBlobClient(folderPath);
-        await blobClient.UploadAsync(imageStream, overwrite: true);
-        var metadata = new Dictionary<string, string>
-        {
-            { "Manufacturer", fileName },
-            { "session", sesssionId },
-            { "CreatedOn", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") }
-        };
 
-        // Upload metadata to the blob
-        await blobClient.SetMetadataAsync(metadata);
+        _logger.LogInformation($"Uploading image. {folderPath}");
+        await blobClient.UploadAsync(imageStream, overwrite: true);
     }
 
     public async Task<string> GenerateSasUriAsync(string fileName)
