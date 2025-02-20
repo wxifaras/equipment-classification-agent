@@ -3,4 +3,5 @@
 public class EquipmentClassificationResponse
 {
     public string SessionId { get; set; }
+    public List<GolfBallAISearch> AzureAISearchQuery { get; set; }
 }
