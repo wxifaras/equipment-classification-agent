@@ -238,7 +238,7 @@ public class AzureAISearchService : IAzureAISearchService
 
             if (result.SemanticSearch?.RerankerScore >= minRerankerScore)
             {
-                GolfBallAISearch golfBall = new GolfBallAISearch
+                var golfBall = new GolfBallAISearch
                 {
                     reRankerScore = result.SemanticSearch?.RerankerScore.ToString() ?? result.Score.ToString(),
                     Manufacturer = result.Document["manufacturer"]?.ToString() ?? string.Empty,
