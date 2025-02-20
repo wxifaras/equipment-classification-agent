@@ -110,6 +110,7 @@ public class AzureOpenAIService : IAzureOpenAIService
             _logger.LogInformation($"An error occurred: {ex.Message}");
             response.AzureAISearchQuery = null;
         }
+
         return response;
     }
 
