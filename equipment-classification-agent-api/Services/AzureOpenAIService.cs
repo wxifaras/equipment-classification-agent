@@ -94,7 +94,11 @@ public class AzureOpenAIService : IAzureOpenAIService
                 _logger.LogInformation($"Result: {completion.Content[0].Text}");
                 jsonResponse = $"{completion.Content[0].Text}";
                 var properties = FetchPropertiesFromJson(jsonResponse);
-                response.AzureAISearchQuery = await _azureAISearchService.SearchGolfBallAsync(properties);
+
+                var jsonObject = JObject.Parse(jsonResponse);
+                var golfBallDetail = jsonObject.ToObject<GolfBallLLMDetail>();
+
+                response.AzureAISearchQuery = await _azureAISearchService.SearchGolfBallAsync(properties!, filter:$"colour eq '{golfBallDetail?.colour}'");
             }
             else
             {
