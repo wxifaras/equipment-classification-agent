@@ -135,15 +135,21 @@ public class AzureOpenAIService : IAzureOpenAIService
             var properties = new List<string>();
 
             if (!string.IsNullOrWhiteSpace(golfBallDetail.manufacturer))
+            {
                 properties.Add($"manufacturer:{golfBallDetail.manufacturer}");
+            }
 
             if (!string.IsNullOrWhiteSpace(golfBallDetail.colour))
+            {
                 properties.Add($"colour:{golfBallDetail.colour}");
+            }
 
-            string seamMarkingText = string.Empty;
+            var seamMarkingText = string.Empty;
 
             if (!string.IsNullOrWhiteSpace(golfBallDetail.seam_marking))
+            {
                 seamMarkingText = $"seam_marking:{golfBallDetail.seam_marking}";
+            }
 
             if (!string.IsNullOrWhiteSpace(golfBallDetail.pole_marking))
             {
@@ -154,7 +160,9 @@ public class AzureOpenAIService : IAzureOpenAIService
             }
 
             if (!string.IsNullOrWhiteSpace(seamMarkingText))
+            {
                 properties.Add(" "+seamMarkingText);
+            }
 
             return string.Join(" and ", properties);
         }
