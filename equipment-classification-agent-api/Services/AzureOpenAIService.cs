@@ -41,10 +41,12 @@ public class AzureOpenAIService : IAzureOpenAIService
 
     public async Task<EquipmentClassificationResponse> ExtractImageDetailsAsync(EquipmentClassificationRequest request)
     {
-        ChatClient chatClient = _azureOpenAIClient.GetChatClient(_deploymentName);
-        EquipmentClassificationResponse response = new EquipmentClassificationResponse();
+        var chatClient = _azureOpenAIClient.GetChatClient(_deploymentName);
+        var response = new EquipmentClassificationResponse();
         var imageUrlList = new List<string>();
+
         string fileName = string.Empty;
+
         foreach (var image in request.Images)
         {
             fileName = $"{request.SessionId}/{image.FileName}";
