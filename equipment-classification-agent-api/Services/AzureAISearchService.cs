@@ -14,6 +14,16 @@ public interface IAzureAISearchService
 {
     Task CreateAISearchIndexAsync();
     Task IndexDataAsync();
+
+    Task<List<GolfBallAISearch>> SearchGolfBallAsync(
+           string query,
+           int k = 3,
+           int top = 3, // top 3 results
+           string? filter = null,
+           bool textOnly = false,
+           bool hybrid = true,
+           bool semantic = false,
+           double minRerankerScore = 2.0);
 }
 
 public class AzureAISearchService : IAzureAISearchService
@@ -39,9 +49,9 @@ public class AzureAISearchService : IAzureAISearchService
         ILogger<AzureAISearchService> logger,
         IOptions<AzureAISearchOptions> azureAISearchOptions,
         IOptions<AzureOpenAIOptions> azureOpenAIOptions,
-        IAzureSQLService azureSQLService, 
-        SearchIndexClient indexClient, 
-        AzureOpenAIClient azureOpenAIClient, 
+        IAzureSQLService azureSQLService,
+        SearchIndexClient indexClient,
+        AzureOpenAIClient azureOpenAIClient,
         SearchClient searchClient)
     {
         _indexName = azureAISearchOptions.Value.IndexName;
@@ -51,9 +61,9 @@ public class AzureAISearchService : IAzureAISearchService
         _azureOpenAIEmbeddingDimensions = azureOpenAIOptions.Value.AzureOpenAIEmbeddingDimensions;
         _azureOpenAIEmbeddingModel = azureOpenAIOptions.Value.AzureOpenAIEmbeddingModel;
         _azureOpenAIEmbeddingDeployment = azureOpenAIOptions.Value.AzureOpenAIEmbeddingDeployment;
-        _indexClient =indexClient;
-        _azureOpenAIClient=azureOpenAIClient;
-        _searchClient=searchClient;
+        _indexClient = indexClient;
+        _azureOpenAIClient = azureOpenAIClient;
+        _searchClient = searchClient;
 
         _logger = logger;
         _azureSQLService = azureSQLService;
@@ -105,9 +115,10 @@ public class AzureAISearchService : IAzureAISearchService
                 {
                     new SemanticConfiguration(semanticSearchConfig, new()
                     {
-                        TitleField = new SemanticField("manufacturer"),
                         ContentFields =
                         {
+                            new SemanticField("manufacturer"),
+                            new SemanticField("colour"),
                             new SemanticField("pole_marking"),
                             new SemanticField("seam_marking")
                         }
@@ -116,7 +127,7 @@ public class AzureAISearchService : IAzureAISearchService
             },
             Fields =
             {
-                 new SimpleField("id", SearchFieldDataType.String) { IsKey = true, IsFilterable = true },
+                new SimpleField("id", SearchFieldDataType.String) { IsKey = true, IsFilterable = true },
                 new SearchableField("manufacturer") { IsFilterable = true, IsSortable = true },
                 new SearchableField("usga_lot_num") { IsFilterable = true },
                 new SearchableField("pole_marking") { IsFilterable = true },
@@ -156,10 +167,10 @@ public class AzureAISearchService : IAzureAISearchService
 
         foreach (var golfBall in golfBalls)
         {
-            string textForEmbedding = $"Manufacturer: {golfBall.Manufacturer}, " +
-                                      $"Pole Marking: {golfBall.Pole_Marking}, " +
-                                      $"Color: {golfBall.Colour}, " +
-                                      $"Seam Marking: {golfBall.Seam_Marking}";
+            string textForEmbedding = $"manufacturer: {golfBall.Manufacturer}, " +
+                                      $"pole_marking: {golfBall.Pole_Marking}, " +
+                                      $"colour: {golfBall.Colour}, " +
+                                      $"seam_marking: {golfBall.Seam_Marking}";
 
             OpenAIEmbedding embedding = await embeddingClient.GenerateEmbeddingAsync(textForEmbedding);
             golfBall.VectorContent = embedding.ToFloats().ToArray().ToList();
@@ -172,5 +183,82 @@ public class AzureAISearchService : IAzureAISearchService
         _logger.LogInformation($"Indexed {golfBalls.Count} golf balls.");
         stopwatch.Stop();
         _logger.LogInformation($"Execution Time: {stopwatch.ElapsedMilliseconds} ms");
+    }
+
+    public async Task<List<GolfBallAISearch>> SearchGolfBallAsync(
+           string query,
+           int k = 3,
+           int top = 3, // top 3 results
+           string? filter = null,
+           bool textOnly = false,
+           bool hybrid = true,
+           bool semantic = false,
+           double minRerankerScore = 2.0)
+    {
+        var searchOptions = new SearchOptions
+        {
+            Filter = filter,
+            Size = top,
+            Select = { "id", "manufacturer", "pole_marking", "usga_lot_num", "constCode", "ballSpecs", "dimples", "spin", "pole_2", "colour", "seam_marking", "imageUrl" },
+            IncludeTotalCount = true
+        };
+
+        if (!textOnly)
+        {
+            searchOptions.VectorSearch = new()
+            {
+                Queries = {
+                    new VectorizableTextQuery(text: query)
+                    {
+                        KNearestNeighborsCount = k,
+                        Fields = { "vectorContent" }
+                    }
+                }
+            };
+        }
+
+        if (hybrid || semantic)
+        {
+            searchOptions.QueryType = SearchQueryType.Semantic;
+            searchOptions.SemanticSearch = new SemanticSearchOptions
+            {
+                SemanticConfigurationName = "golf-semantic-config",
+                QueryCaption = new QueryCaption(QueryCaptionType.Extractive),
+                QueryAnswer = new QueryAnswer(QueryAnswerType.Extractive),
+            };
+        }
+
+        string? queryText = (textOnly || hybrid || semantic) ? query : null;
+        SearchResults<SearchDocument> response = await _searchClient.SearchAsync<SearchDocument>(queryText, searchOptions);
+
+        var golfballDataList = new List<GolfBallAISearch>();
+        await foreach (var result in response.GetResultsAsync())
+        {
+            double? relevanceScore = result.SemanticSearch?.RerankerScore ?? result.Score;
+
+            if (result.SemanticSearch?.RerankerScore >= minRerankerScore)
+            {
+                var golfBall = new GolfBallAISearch
+                {
+                    reRankerScore = result.SemanticSearch?.RerankerScore.ToString() ?? result.Score.ToString(),
+                    Manufacturer = result.Document["manufacturer"]?.ToString() ?? string.Empty,
+                    Pole_Marking = result.Document["pole_marking"]?.ToString() ?? string.Empty,
+                    USGA_Lot_Num = result.Document["usga_lot_num"]?.ToString() ?? string.Empty,
+                    ConstCode = result.Document["constCode"]?.ToString() ?? string.Empty,
+                    BallSpecs = result.Document["ballSpecs"]?.ToString() ?? string.Empty,
+                    Dimples = result.Document["dimples"]?.ToString() ?? string.Empty,
+                    Spin = result.Document["spin"]?.ToString() ?? string.Empty,
+                    Pole_2 = result.Document["pole_2"]?.ToString() ?? string.Empty,
+                    Colour = result.Document["colour"]?.ToString() ?? string.Empty,
+                    Seam_Marking = result.Document["seam_marking"]?.ToString() ?? string.Empty,
+                    ImageUrl = result.Document["imageUrl"]?.ToString() ?? string.Empty
+                };
+
+                golfballDataList.Add(golfBall);
+            }
+        }
+
+        _logger.LogInformation($"Indexed {golfballDataList.Count} golf balls Serach Result.");
+        return golfballDataList;
     }
 }

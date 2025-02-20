@@ -37,7 +37,7 @@ public class AzureStorageService
         Uri? sasUri = null;
         BlobClient blobClient = new BlobClient(_storageConnectionString, _containerName, fileName);
 
-        if (blobClient.Exists())
+        if (await blobClient.ExistsAsync())
         {
             BlobSasBuilder sasBuilder = new BlobSasBuilder()
             {
@@ -50,6 +50,11 @@ public class AzureStorageService
             sasBuilder.SetPermissions(BlobSasPermissions.Read);
 
             sasUri = blobClient.GenerateSasUri(sasBuilder);
+        }
+
+        if (sasUri == null)
+        {
+            throw new Exception("Failed to generate SAS URI");
         }
 
         return sasUri.ToString();
