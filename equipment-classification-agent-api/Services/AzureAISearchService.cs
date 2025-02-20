@@ -148,6 +148,13 @@ public class AzureAISearchService : IAzureAISearchService
             }
         };
 
+        var index = await _indexClient.GetIndexAsync(_indexName);
+
+        if (index != null)
+        {
+            await _indexClient.DeleteIndexAsync(_indexName);
+        }
+
         await _indexClient.CreateOrUpdateIndexAsync(searchIndex);
 
         _logger.LogInformation($"Completed creating index {searchIndex}");
@@ -258,7 +265,7 @@ public class AzureAISearchService : IAzureAISearchService
             }
         }
 
-        _logger.LogInformation($"Indexed {golfballDataList.Count} golf balls Serach Result.");
+        _logger.LogInformation($"Found {golfballDataList.Count} golf ball matches.");
         return golfballDataList;
     }
 }
