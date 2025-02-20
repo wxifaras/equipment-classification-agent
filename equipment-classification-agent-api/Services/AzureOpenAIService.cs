@@ -98,7 +98,7 @@ public class AzureOpenAIService : IAzureOpenAIService
                 var jsonObject = JObject.Parse(jsonResponse);
                 var golfBallDetail = jsonObject.ToObject<GolfBallLLMDetail>();
 
-                response.AzureAISearchQuery = await _azureAISearchService.SearchGolfBallAsync(properties!, filter:$"colour eq '{golfBallDetail?.colour}");
+                response.AzureAISearchQuery = await _azureAISearchService.SearchGolfBallAsync(properties!, filter:$"colour eq '{golfBallDetail?.colour}'");
             }
             else
             {
