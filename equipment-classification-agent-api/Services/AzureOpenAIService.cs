@@ -68,8 +68,8 @@ public class AzureOpenAIService : IAzureOpenAIService
             }.Concat(imageUrlList.Select(url => ChatMessageContentPart.CreateImagePart(new Uri(url), imageDetailLevel))).ToList())
         };
 
-        JSchemaGenerator generator = new JSchemaGenerator();
-        string jsonSchema = generator.Generate(typeof(GolfBallLLMDetail)).ToString();
+        var generator = new JSchemaGenerator();
+        var jsonSchema = generator.Generate(typeof(GolfBallLLMDetail)).ToString();
 
         //Create chat completion options
         var options = new ChatCompletionOptions
@@ -78,9 +78,7 @@ public class AzureOpenAIService : IAzureOpenAIService
             MaxOutputTokenCount = 800,
             FrequencyPenalty = 0,
             PresencePenalty = 0,
-              ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
-            "GolfBallDetail",
-            BinaryData.FromString(jsonSchema))
+            ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat("GolfBallDetail", BinaryData.FromString(jsonSchema))
         };
 
         try
