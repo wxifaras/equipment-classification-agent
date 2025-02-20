@@ -193,7 +193,7 @@ public class AzureAISearchService : IAzureAISearchService
            bool textOnly = false,
            bool hybrid = true,
            bool semantic = false,
-           double minRerankerScore = 2.0)
+           double minRerankerScore = 2.5)
     {
         var searchOptions = new SearchOptions
         {
