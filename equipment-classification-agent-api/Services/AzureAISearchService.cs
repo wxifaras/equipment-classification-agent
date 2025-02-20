@@ -7,7 +7,7 @@ using Azure.Search.Documents.Models;
 using Azure.Search.Documents;
 using OpenAI.Embeddings;
 using System.Diagnostics;
-using System.Threading.Tasks;
+
 
 namespace equipment_classification_agent_api.Services;
 
@@ -128,7 +128,7 @@ public class AzureAISearchService : IAzureAISearchService
             },
             Fields =
             {
-                 new SimpleField("id", SearchFieldDataType.String) { IsKey = true, IsFilterable = true },
+                new SimpleField("id", SearchFieldDataType.String) { IsKey = true, IsFilterable = true },
                 new SearchableField("manufacturer") { IsFilterable = true, IsSortable = true },
                 new SearchableField("usga_lot_num") { IsFilterable = true },
                 new SearchableField("pole_marking") { IsFilterable = true },
@@ -254,12 +254,12 @@ public class AzureAISearchService : IAzureAISearchService
                     Colour = result.Document["colour"]?.ToString() ?? "",
                     Seam_Marking = result.Document["seam_marking"]?.ToString() ?? "",
                     ImageUrl = result.Document["imageUrl"]?.ToString() ?? ""
-
-
                 };
+
                 golfballDataList.Add(golfBall);
             }
         }
+
         _logger.LogInformation($"Indexed {golfballDataList.Count} golf balls Serach Result.");
         return golfballDataList;
     }

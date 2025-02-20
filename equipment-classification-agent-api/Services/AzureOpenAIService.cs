@@ -4,7 +4,6 @@ using equipment_classification_agent_api.Models;
 using Microsoft.Extensions.Options;
 using equipment_classification_agent_api.Prompts;
 using OpenAI.Chat;
-using OpenAI.Images;
 using Newtonsoft.Json.Schema.Generation;
 using Newtonsoft.Json.Linq;
 using Azure.Search.Documents;
@@ -165,5 +164,4 @@ public class AzureOpenAIService : IAzureOpenAIService
             return null;
         }
     }
-
 }
