@@ -113,7 +113,7 @@ public class AzureOpenAIService : IAzureOpenAIService
         return response;
     }
 
-    public string FetchPropertiesFromJson(string llmJsonResult)
+    public string? FetchPropertiesFromJson(string llmJsonResult)
     {
         if (string.IsNullOrWhiteSpace(llmJsonResult))
         {
