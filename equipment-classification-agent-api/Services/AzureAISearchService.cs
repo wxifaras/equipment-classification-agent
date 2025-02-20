@@ -148,9 +148,12 @@ public class AzureAISearchService : IAzureAISearchService
             }
         };
 
-        var index = await _indexClient.GetIndexAsync(_indexName);
+        var indexNames = _indexClient.GetIndexNames();
 
-        if (index != null)
+        // Check if the specified index exists
+        bool indexExists = indexNames.Contains(_indexName);
+
+        if (indexExists)
         {
             await _indexClient.DeleteIndexAsync(_indexName);
         }
