@@ -98,18 +98,16 @@ public class AzureOpenAIService : IAzureOpenAIService
                 var jsonObject = JObject.Parse(jsonResponse);
                 var golfBallDetail = jsonObject.ToObject<GolfBallLLMDetail>();
 
-                response.AzureAISearchQuery = await _azureAISearchService.SearchGolfBallAsync(properties!, filter:$"colour eq '{golfBallDetail?.colour}'");
+                response.AzureAISearchQuery = await _azureAISearchService.SearchGolfBallAsync(properties!, filter:$"colour eq '{golfBallDetail?.colour}");
             }
             else
             {
                 _logger.LogInformation("No response received.");
-                response.AzureAISearchQuery = null;
             }
         }
         catch (Exception ex)
         {
             _logger.LogInformation($"An error occurred: {ex.Message}");
-            response.AzureAISearchQuery = null;
         }
 
         return response;
