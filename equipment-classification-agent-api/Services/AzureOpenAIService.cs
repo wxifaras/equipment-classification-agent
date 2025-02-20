@@ -95,7 +95,7 @@ public class AzureOpenAIService : IAzureOpenAIService
             {
                 _logger.LogInformation($"Result: {completion.Content[0].Text}");
                 jsonResponse = $"{completion.Content[0].Text}";
-                var properties = await FetchPropertiesFromJson(jsonResponse);
+                var properties = FetchPropertiesFromJson(jsonResponse);
                 response.AzureAISearchQuery = await _azureAISearchService.SearchGolfBall(_searchClient, properties);
                 
             }
@@ -113,7 +113,7 @@ public class AzureOpenAIService : IAzureOpenAIService
         return response;
     }
 
-    public async Task<string> FetchPropertiesFromJson(string llmJsonResult)
+    public string FetchPropertiesFromJson(string llmJsonResult)
     {
         if (string.IsNullOrWhiteSpace(llmJsonResult))
         {
@@ -154,7 +154,7 @@ public class AzureOpenAIService : IAzureOpenAIService
             }
 
             if (!string.IsNullOrWhiteSpace(seamMarkingText))
-                properties.Add(seamMarkingText);
+                properties.Add(" "+seamMarkingText);
 
             return string.Join(" and ", properties);
         }
