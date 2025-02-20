@@ -15,7 +15,7 @@ public interface IAzureAISearchService
     Task CreateAISearchIndexAsync();
     Task IndexDataAsync();
 
-    Task<List<GolfBallAISearch>> SearchGolfBall(
+    Task<List<GolfBallAISearch>> SearchGolfBallAsync(
            string query,
            int k = 3,
            int top = 10,
@@ -185,10 +185,10 @@ public class AzureAISearchService : IAzureAISearchService
         _logger.LogInformation($"Execution Time: {stopwatch.ElapsedMilliseconds} ms");
     }
 
-    public async Task<List<GolfBallAISearch>> SearchGolfBall(
+    public async Task<List<GolfBallAISearch>> SearchGolfBallAsync(
            string query,
            int k = 3,
-           int top = 10,
+           int top = 3, // top 3 results
            string? filter = null,
            bool textOnly = false,
            bool hybrid = true,
