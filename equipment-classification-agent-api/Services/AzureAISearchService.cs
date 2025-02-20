@@ -115,7 +115,6 @@ public class AzureAISearchService : IAzureAISearchService
                 {
                     new SemanticConfiguration(semanticSearchConfig, new()
                     {
-                        //TitleField = new SemanticField("manufacturer"),
                         ContentFields =
                         {
                             new SemanticField("manufacturer"),
