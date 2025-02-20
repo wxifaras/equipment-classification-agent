@@ -18,7 +18,7 @@ public interface IAzureAISearchService
     Task<List<GolfBallAISearch>> SearchGolfBallAsync(
            string query,
            int k = 3,
-           int top = 10,
+           int top = 3, // top 3 results
            string? filter = null,
            bool textOnly = false,
            bool hybrid = true,
@@ -193,7 +193,7 @@ public class AzureAISearchService : IAzureAISearchService
            bool textOnly = false,
            bool hybrid = true,
            bool semantic = false,
-           double minRerankerScore = 2.5)
+           double minRerankerScore = 2.0)
     {
         var searchOptions = new SearchOptions
         {
