@@ -8,7 +8,6 @@ using Azure.Search.Documents;
 using OpenAI.Embeddings;
 using System.Diagnostics;
 
-
 namespace equipment_classification_agent_api.Services;
 
 public interface IAzureAISearchService
@@ -17,7 +16,6 @@ public interface IAzureAISearchService
     Task IndexDataAsync();
 
     Task<List<GolfBallAISearch>> SearchGolfBall(
-           SearchClient searchClient,
            string query,
            int k = 3,
            int top = 10,
@@ -187,7 +185,6 @@ public class AzureAISearchService : IAzureAISearchService
     }
 
     public async Task<List<GolfBallAISearch>> SearchGolfBall(
-           SearchClient searchClient,
            string query,
            int k = 3,
            int top = 10,
@@ -210,16 +207,16 @@ public class AzureAISearchService : IAzureAISearchService
             searchOptions.VectorSearch = new()
             {
                 Queries = {
-                new VectorizableTextQuery(text: query)
-                {
-                    KNearestNeighborsCount = k,
-                    Fields = { "vectorContent" }
+                    new VectorizableTextQuery(text: query)
+                    {
+                        KNearestNeighborsCount = k,
+                        Fields = { "vectorContent" }
+                    }
                 }
-            }
             };
         }
 
-       if (hybrid || semantic)
+        if (hybrid || semantic)
         {
             searchOptions.QueryType = SearchQueryType.Semantic;
             searchOptions.SemanticSearch = new SemanticSearchOptions
@@ -231,7 +228,7 @@ public class AzureAISearchService : IAzureAISearchService
         }
 
         string? queryText = (textOnly || hybrid || semantic) ? query : null;
-        SearchResults<SearchDocument> response = await searchClient.SearchAsync<SearchDocument>(queryText, searchOptions);
+        SearchResults<SearchDocument> response = await _searchClient.SearchAsync<SearchDocument>(queryText, searchOptions);
 
         var golfballDataList = new List<GolfBallAISearch>();
         await foreach (var result in response.GetResultsAsync())
@@ -243,17 +240,17 @@ public class AzureAISearchService : IAzureAISearchService
                 GolfBallAISearch golfBall = new GolfBallAISearch
                 {
                     reRankerScore = result.SemanticSearch?.RerankerScore.ToString() ?? result.Score.ToString(),
-                    Manufacturer = result.Document["manufacturer"]?.ToString() ?? "",
-                    Pole_Marking = result.Document["pole_marking"]?.ToString() ?? "",
-                    USGA_Lot_Num = result.Document["usga_lot_num"]?.ToString() ?? "",
-                    ConstCode = result.Document["constCode"]?.ToString() ?? "",
-                    BallSpecs = result.Document["ballSpecs"]?.ToString() ?? "",
-                    Dimples = result.Document["dimples"]?.ToString() ?? "",
-                    Spin = result.Document["spin"]?.ToString() ?? "",
-                    Pole_2 = result.Document["pole_2"]?.ToString() ?? "",
-                    Colour = result.Document["colour"]?.ToString() ?? "",
-                    Seam_Marking = result.Document["seam_marking"]?.ToString() ?? "",
-                    ImageUrl = result.Document["imageUrl"]?.ToString() ?? ""
+                    Manufacturer = result.Document["manufacturer"]?.ToString() ?? string.Empty,
+                    Pole_Marking = result.Document["pole_marking"]?.ToString() ?? string.Empty,
+                    USGA_Lot_Num = result.Document["usga_lot_num"]?.ToString() ?? string.Empty,
+                    ConstCode = result.Document["constCode"]?.ToString() ?? string.Empty,
+                    BallSpecs = result.Document["ballSpecs"]?.ToString() ?? string.Empty,
+                    Dimples = result.Document["dimples"]?.ToString() ?? string.Empty,
+                    Spin = result.Document["spin"]?.ToString() ?? string.Empty,
+                    Pole_2 = result.Document["pole_2"]?.ToString() ?? string.Empty,
+                    Colour = result.Document["colour"]?.ToString() ?? string.Empty,
+                    Seam_Marking = result.Document["seam_marking"]?.ToString() ?? string.Empty,
+                    ImageUrl = result.Document["imageUrl"]?.ToString() ?? string.Empty
                 };
 
                 golfballDataList.Add(golfBall);

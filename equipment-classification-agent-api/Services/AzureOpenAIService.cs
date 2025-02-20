@@ -21,7 +21,6 @@ public class AzureOpenAIService : IAzureOpenAIService
     private readonly AzureOpenAIClient _azureOpenAIClient;
     private readonly AzureStorageService _azureStorageService;
     private readonly IAzureAISearchService _azureAISearchService;
-    private readonly SearchClient _searchClient;
     private readonly string _deploymentName;
 
     public AzureOpenAIService(
@@ -38,7 +37,6 @@ public class AzureOpenAIService : IAzureOpenAIService
         _azureStorageService = azureStorageService;
         _logger = logger;
         _azureAISearchService = azureAISearchService;
-        _searchClient = searchClient;
     }
 
     public async Task<EquipmentClassificationResponse> ExtractImageDetailsAsync(EquipmentClassificationRequest request)
@@ -80,24 +78,23 @@ public class AzureOpenAIService : IAzureOpenAIService
             PresencePenalty = 0,
               ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
             "GolfBallDetail",
-            BinaryData.FromString(jsonSchema)
-            )
+            BinaryData.FromString(jsonSchema))
         };
 
         try
         {
-            var jsonResponse = "";
+            var jsonResponse = string.Empty;
             // Create the chat completion request
             ChatCompletion completion = await chatClient.CompleteChatAsync(messages, options);
             response.SessionId = request.SessionId;
+
             // Print the response
             if (completion.Content != null && completion.Content.Count > 0)
             {
                 _logger.LogInformation($"Result: {completion.Content[0].Text}");
                 jsonResponse = $"{completion.Content[0].Text}";
                 var properties = FetchPropertiesFromJson(jsonResponse);
-                response.AzureAISearchQuery = await _azureAISearchService.SearchGolfBall(_searchClient, properties);
-                
+                response.AzureAISearchQuery = await _azureAISearchService.SearchGolfBall(properties);
             }
             else
             {

@@ -49,14 +49,13 @@ public class EquipmentClassificationController : ControllerBase
                 sessionId = request.SessionId;
             }
 
-
             foreach (var image in request.Images)
             {
-                _logger.LogInformation($"Uploading image. {image.FileName}");
+               _logger.LogInformation($"Uploading image. {image.FileName}");
                await _azureStorageService.UploadImageAsync(image.OpenReadStream(), image.FileName, sessionId);
             }
 
-           EquipmentClassificationResponse response= await _azureOpenAIService.ExtractImageDetailsAsync(request);
+            var response= await _azureOpenAIService.ExtractImageDetailsAsync(request);
 
             return Ok(new
             {
@@ -69,7 +68,5 @@ public class EquipmentClassificationController : ControllerBase
             _logger.LogError(ex, "Error uploading image.");
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
-
-        
     }
 }
