@@ -166,10 +166,10 @@ public class AzureAISearchService : IAzureAISearchService
 
         foreach (var golfBall in golfBalls)
         {
-            string textForEmbedding = $"Manufacturer: {golfBall.Manufacturer}, " +
-                                      $"Pole Marking: {golfBall.Pole_Marking}, " +
-                                      $"Colour: {golfBall.Colour}, " +
-                                      $"Seam Marking: {golfBall.Seam_Marking}";
+            string textForEmbedding = $"manufacturer: {golfBall.Manufacturer}, " +
+                                      $"pole_marking: {golfBall.Pole_Marking}, " +
+                                      $"colour: {golfBall.Colour}, " +
+                                      $"seam_marking: {golfBall.Seam_Marking}";
 
             OpenAIEmbedding embedding = await embeddingClient.GenerateEmbeddingAsync(textForEmbedding);
             golfBall.VectorContent = embedding.ToFloats().ToArray().ToList();
