@@ -248,7 +248,7 @@ public class AzureAISearchService : IAzureAISearchService
             {
                 var golfBall = new GolfBallAISearch
                 {
-                    reRankerScore = result.SemanticSearch?.RerankerScore.ToString() ?? result.Score.ToString(),
+                    ReRankerScore = result.SemanticSearch?.RerankerScore.ToString() ?? result.Score.ToString(),
                     Manufacturer = result.Document["manufacturer"]?.ToString() ?? string.Empty,
                     Pole_Marking = result.Document["pole_marking"]?.ToString() ?? string.Empty,
                     USGA_Lot_Num = result.Document["usga_lot_num"]?.ToString() ?? string.Empty,

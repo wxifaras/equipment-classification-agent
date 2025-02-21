@@ -13,5 +13,5 @@ public class GolfBallAISearch
     public string? Pole_2 { get; set; }
     public string? Seam_Marking { get; set; }
     public string? ImageUrl { get; set; }
-    public string? reRankerScore { get; set; }
+    public string? ReRankerScore { get; set; }
 }
