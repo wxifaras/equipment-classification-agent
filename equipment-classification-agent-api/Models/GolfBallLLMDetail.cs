@@ -6,7 +6,6 @@ public class GolfBallLLMDetail
     public string colour { get; set; }
     public string seam_marking { get; set; }
     public string pole_marking { get; set; }
-    public bool Success { get; set; }
 
     public override string ToString()
     {
@@ -16,7 +15,6 @@ public class GolfBallLLMDetail
         if (!string.IsNullOrWhiteSpace(colour)) values.Add(colour);
         if (!string.IsNullOrWhiteSpace(seam_marking)) values.Add(seam_marking);
         if (!string.IsNullOrWhiteSpace(pole_marking)) values.Add(pole_marking);
-        values.Add($"Success: {Success}");
 
         return string.Join(", ", values);
     }

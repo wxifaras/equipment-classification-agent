@@ -12,7 +12,6 @@ public class CorePrompts
         Color: Store the color of the ball in the # color # property of the JSON structure below
         Seam Markings: These could be text or a combination of text and symbols. If there are symbols near or around text, you will capture the type of symbol along with the color of the symbol. Store your findings in the # seam markings # property of the JSON structure below
         Pole Markings: These could be text or a combination of text and symbols. If there are symbols near or around text, you will capture the type of symbol along with the color of the symbol. Store your findings in the # pole markings # property of the JSON structure below
-        Success: Set the # success # property to true if you are able to extract these details or set to false if not
 
         # JSON Raw Response #
         {     
