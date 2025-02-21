@@ -144,20 +144,17 @@ public class AzureOpenAIService : IAzureOpenAIService
                 properties.Add($"colour:{golfBallDetail.colour}");
             }
 
+            if (!string.IsNullOrWhiteSpace(golfBallDetail.pole_marking))
+            {
+                properties.Add($"pole_marking:{golfBallDetail.pole_marking}");
+            }
+
             var seamMarkingText = string.Empty;
 
             if (!string.IsNullOrWhiteSpace(golfBallDetail.seam_marking))
             {
                 seamMarkingText = $"seam_marking:{golfBallDetail.seam_marking}";
-            }
-
-            if (!string.IsNullOrWhiteSpace(golfBallDetail.pole_marking))
-            {
-                // Append pole_marking with a comma instead of "and"
-                seamMarkingText = string.IsNullOrWhiteSpace(seamMarkingText)
-                    ? golfBallDetail.pole_marking
-                    : $"{seamMarkingText}, {golfBallDetail.pole_marking}";
-            }
+            }            
 
             if (!string.IsNullOrWhiteSpace(seamMarkingText))
             {
