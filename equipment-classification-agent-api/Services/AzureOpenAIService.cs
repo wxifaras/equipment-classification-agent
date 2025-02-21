@@ -7,7 +7,6 @@ using OpenAI.Chat;
 using Newtonsoft.Json.Schema.Generation;
 using Newtonsoft.Json.Linq;
 using Azure.Search.Documents;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace equipment_classification_agent_api.Services;
 
