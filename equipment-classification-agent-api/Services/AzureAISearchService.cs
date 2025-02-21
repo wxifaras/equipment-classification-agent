@@ -14,7 +14,6 @@ public interface IAzureAISearchService
 {
     Task CreateAISearchIndexAsync();
     Task IndexDataAsync();
-
     Task<List<GolfBallAISearch>> SearchGolfBallAsync(
            string query,
            int k = 3,
@@ -54,145 +53,163 @@ public class AzureAISearchService : IAzureAISearchService
         AzureOpenAIClient azureOpenAIClient,
         SearchClient searchClient)
     {
-        _indexName = azureAISearchOptions.Value.IndexName;
+        _indexName = azureAISearchOptions.Value.IndexName ?? throw new ArgumentNullException(nameof(azureAISearchOptions.Value.IndexName));
+        _azureOpenAIEndpoint = azureOpenAIOptions.Value.AzureOpenAIEndPoint ?? throw new ArgumentNullException(nameof(azureOpenAIOptions.Value.AzureOpenAIEndPoint));
+        _azureOpenAIKey = azureOpenAIOptions.Value.AzureOpenAIKey ?? throw new ArgumentNullException(nameof(azureOpenAIOptions.Value.AzureOpenAIKey));
+        _azureOpenAIEmbeddingDimensions = azureOpenAIOptions.Value.AzureOpenAIEmbeddingDimensions ?? throw new ArgumentNullException(nameof(azureOpenAIOptions.Value.AzureOpenAIEmbeddingDimensions));
+        _azureOpenAIEmbeddingModel = azureOpenAIOptions.Value.AzureOpenAIEmbeddingModel ?? throw new ArgumentNullException(nameof(azureOpenAIOptions.Value.AzureOpenAIEmbeddingModel));
+        _azureOpenAIEmbeddingDeployment = azureOpenAIOptions.Value.AzureOpenAIEmbeddingDeployment ?? throw new ArgumentNullException(nameof(azureOpenAIOptions.Value.AzureOpenAIEmbeddingDeployment));
+        _indexClient = indexClient ?? throw new ArgumentNullException(nameof(indexClient));
+        _azureOpenAIClient = azureOpenAIClient ?? throw new ArgumentNullException(nameof(azureOpenAIClient));
+        _searchClient = searchClient ?? throw new ArgumentNullException(nameof(searchClient));
 
-        _azureOpenAIEndpoint = azureOpenAIOptions.Value.AzureOpenAIEndPoint;
-        _azureOpenAIKey = azureOpenAIOptions.Value.AzureOpenAIKey;
-        _azureOpenAIEmbeddingDimensions = azureOpenAIOptions.Value.AzureOpenAIEmbeddingDimensions;
-        _azureOpenAIEmbeddingModel = azureOpenAIOptions.Value.AzureOpenAIEmbeddingModel;
-        _azureOpenAIEmbeddingDeployment = azureOpenAIOptions.Value.AzureOpenAIEmbeddingDeployment;
-        _indexClient = indexClient;
-        _azureOpenAIClient = azureOpenAIClient;
-        _searchClient = searchClient;
-
-        _logger = logger;
-        _azureSQLService = azureSQLService;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _azureSQLService = azureSQLService ?? throw new ArgumentNullException(nameof(azureSQLService));
     }
 
     public async Task CreateAISearchIndexAsync()
     {
-        SearchIndex searchIndex = new(_indexName)
+        try
         {
-            VectorSearch = new()
+            SearchIndex searchIndex = new(_indexName)
             {
-                Profiles =
+                VectorSearch = new()
                 {
-                    new VectorSearchProfile(vectorSearchHnswProfile, vectorSearchHnswConfig)
+                    Profiles =
                     {
-                        VectorizerName = vectorSearchVectorizer
+                        new VectorSearchProfile(vectorSearchHnswProfile, vectorSearchHnswConfig)
+                        {
+                            VectorizerName = vectorSearchVectorizer
+                        }
+                    },
+                    Algorithms =
+                    {
+                        new HnswAlgorithmConfiguration(vectorSearchHnswConfig)
+                        {
+                            Parameters = new HnswParameters
+                            {
+                                M = 4,
+                                EfConstruction = 400,
+                                EfSearch = 500,
+                                Metric = "cosine"
+                            }
+                        }
+                    },
+                    Vectorizers =
+                    {
+                        new AzureOpenAIVectorizer(vectorSearchVectorizer)
+                        {
+                            Parameters = new AzureOpenAIVectorizerParameters
+                            {
+                                ResourceUri = new Uri(_azureOpenAIEndpoint),
+                                ModelName = _azureOpenAIEmbeddingModel,
+                                DeploymentName = _azureOpenAIEmbeddingDeployment,
+                                ApiKey = _azureOpenAIKey
+                            }
+                        }
                     }
                 },
-                Algorithms =
+                SemanticSearch = new()
                 {
-                    new HnswAlgorithmConfiguration(vectorSearchHnswConfig)
+                    Configurations =
                     {
-                        Parameters = new HnswParameters
+                        new SemanticConfiguration(semanticSearchConfig, new()
                         {
-                            M = 4,
-                            EfConstruction = 400,
-                            EfSearch = 500,
-                            Metric = "cosine"
-                        }
+                            ContentFields =
+                            {
+                                new SemanticField("manufacturer"),
+                                new SemanticField("colour"),
+                                new SemanticField("pole_marking"),
+                                new SemanticField("seam_marking")
+                            }
+                        })
                     }
-                },//text to vectorized representation
-                Vectorizers =
+                },
+                Fields =
                 {
-                    new AzureOpenAIVectorizer(vectorSearchVectorizer)
+                    new SimpleField("id", SearchFieldDataType.String) { IsKey = true, IsFilterable = true },
+                    new SearchableField("manufacturer") { IsFilterable = true, IsSortable = true },
+                    new SearchableField("usga_lot_num") { IsFilterable = true },
+                    new SearchableField("pole_marking") { IsFilterable = true },
+                    new SearchableField("colour") { IsFilterable = true },
+                    new SearchableField("constCode") { IsFilterable = true },
+                    new SearchableField("ballSpecs") { IsFilterable = true },
+                    new SimpleField("dimples", SearchFieldDataType.Int32) { IsFilterable = true, IsSortable = true },
+                    new SearchableField("spin") { IsFilterable = true },
+                    new SearchableField("pole_2") { IsFilterable = true },
+                    new SearchableField("seam_marking") { IsFilterable = true },
+                    new SimpleField("imageUrl", SearchFieldDataType.String) { IsFilterable = false },
+                    new SearchField("vectorContent", SearchFieldDataType.Collection(SearchFieldDataType.Single))
                     {
-                        Parameters = new AzureOpenAIVectorizerParameters
-                        {
-                            ResourceUri = new Uri(_azureOpenAIEndpoint),
-                            ModelName = _azureOpenAIEmbeddingModel,
-                            DeploymentName = _azureOpenAIEmbeddingDeployment,
-                            ApiKey = _azureOpenAIKey
-                        }
+                        IsSearchable = true,
+                        VectorSearchDimensions = int.Parse(_azureOpenAIEmbeddingDimensions!),
+                        VectorSearchProfileName = vectorSearchHnswProfile
                     }
                 }
-            },// Config Semantic Search for better NLP
-            SemanticSearch = new()
+            };
+
+            var indexNames = _indexClient.GetIndexNames();
+
+            // Check if the specified index exists
+            bool indexExists = indexNames.Contains(_indexName);
+
+            if (indexExists)
             {
-                Configurations =
-                {
-                    new SemanticConfiguration(semanticSearchConfig, new()
-                    {
-                        ContentFields =
-                        {
-                            new SemanticField("manufacturer"),
-                            new SemanticField("colour"),
-                            new SemanticField("pole_marking"),
-                            new SemanticField("seam_marking")
-                        }
-                    })
-                }
-            },
-            Fields =
-            {
-                new SimpleField("id", SearchFieldDataType.String) { IsKey = true, IsFilterable = true },
-                new SearchableField("manufacturer") { IsFilterable = true, IsSortable = true },
-                new SearchableField("usga_lot_num") { IsFilterable = true },
-                new SearchableField("pole_marking") { IsFilterable = true },
-                new SearchableField("colour") { IsFilterable = true },
-                new SearchableField("constCode") { IsFilterable = true },
-                new SearchableField("ballSpecs") { IsFilterable = true },
-                new SimpleField("dimples", SearchFieldDataType.Int32) { IsFilterable = true, IsSortable = true },
-                new SearchableField("spin") { IsFilterable = true },
-                new SearchableField("pole_2") { IsFilterable = true },
-                new SearchableField("seam_marking") { IsFilterable = true },
-                new SimpleField("imageUrl", SearchFieldDataType.String) { IsFilterable = false },
-                new SearchField("vectorContent", SearchFieldDataType.Collection(SearchFieldDataType.Single))
-                {
-                    IsSearchable = true,
-                    VectorSearchDimensions = int.Parse(_azureOpenAIEmbeddingDimensions!),
-                    VectorSearchProfileName = vectorSearchHnswProfile
-                }
+                await _indexClient.DeleteIndexAsync(_indexName).ConfigureAwait(false);
             }
-        };
 
-        var indexNames = _indexClient.GetIndexNames();
+            await _indexClient.CreateOrUpdateIndexAsync(searchIndex).ConfigureAwait(false);
 
-        // Check if the specified index exists
-        bool indexExists = indexNames.Contains(_indexName);
-
-        if (indexExists)
-        {
-            await _indexClient.DeleteIndexAsync(_indexName);
+            _logger.LogInformation($"Completed creating index {searchIndex}");
         }
-
-        await _indexClient.CreateOrUpdateIndexAsync(searchIndex);
-
-        _logger.LogInformation($"Completed creating index {searchIndex}");
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating AI search index.");
+            throw;
+        }
     }
 
     public async Task IndexDataAsync()
     {
         var stopwatch = Stopwatch.StartNew();
-        var golfBalls = await _azureSQLService.GetGolfBallsAsync();
-
-        if (golfBalls == null || golfBalls.Count == 0)
+        try
         {
-            throw new ArgumentException("No golf ball data found in SQL.");
+            var golfBalls = await _azureSQLService.GetGolfBallsAsync().ConfigureAwait(false);
+
+            if (golfBalls == null || golfBalls.Count == 0)
+            {
+                throw new ArgumentException("No golf ball data found in SQL.");
+            }
+
+            var embeddingClient = _azureOpenAIClient.GetEmbeddingClient(_azureOpenAIEmbeddingDeployment);
+
+            foreach (var golfBall in golfBalls)
+            {
+                string textForEmbedding = $"manufacturer: {golfBall.Manufacturer}, " +
+                                          $"pole_marking: {golfBall.Pole_Marking}, " +
+                                          $"colour: {golfBall.Colour}, " +
+                                          $"seam_marking: {golfBall.Seam_Marking}";
+
+                OpenAIEmbedding embedding = await embeddingClient.GenerateEmbeddingAsync(textForEmbedding).ConfigureAwait(false);
+                golfBall.VectorContent = embedding.ToFloats().ToArray().ToList();
+            }
+
+            var batch = IndexDocumentsBatch.Upload(golfBalls);
+
+            var result = await _searchClient.IndexDocumentsAsync(batch).ConfigureAwait(false);
+
+            _logger.LogInformation($"Indexed {golfBalls.Count} golf balls.");
         }
-
-        var embeddingClient = _azureOpenAIClient.GetEmbeddingClient(_azureOpenAIEmbeddingDeployment);
-
-        foreach (var golfBall in golfBalls)
+        catch (Exception ex)
         {
-            string textForEmbedding = $"manufacturer: {golfBall.Manufacturer}, " +
-                                      $"pole_marking: {golfBall.Pole_Marking}, " +
-                                      $"colour: {golfBall.Colour}, " +
-                                      $"seam_marking: {golfBall.Seam_Marking}";
-
-            OpenAIEmbedding embedding = await embeddingClient.GenerateEmbeddingAsync(textForEmbedding);
-            golfBall.VectorContent = embedding.ToFloats().ToArray().ToList();
+            _logger.LogError(ex, "Error indexing data.");
+            throw;
         }
-
-        var batch = IndexDocumentsBatch.Upload(golfBalls);
-
-        var result = await _searchClient.IndexDocumentsAsync(batch);
-
-        _logger.LogInformation($"Indexed {golfBalls.Count} golf balls.");
-        stopwatch.Stop();
-        _logger.LogInformation($"Execution Time: {stopwatch.ElapsedMilliseconds} ms");
+        finally
+        {
+            stopwatch.Stop();
+            _logger.LogInformation($"Execution Time: {stopwatch.ElapsedMilliseconds} ms");
+        }
     }
 
     public async Task<List<GolfBallAISearch>> SearchGolfBallAsync(
@@ -205,68 +222,76 @@ public class AzureAISearchService : IAzureAISearchService
            bool semantic = false,
            double minRerankerScore = 2.0)
     {
-        var searchOptions = new SearchOptions
+        try
         {
-            Filter = filter,
-            Size = top,
-            Select = { "id", "manufacturer", "pole_marking", "usga_lot_num", "constCode", "ballSpecs", "dimples", "spin", "pole_2", "colour", "seam_marking", "imageUrl" },
-            IncludeTotalCount = true
-        };
-
-        if (!textOnly)
-        {
-            searchOptions.VectorSearch = new()
+            var searchOptions = new SearchOptions
             {
-                Queries = {
-                    new VectorizableTextQuery(text: query)
-                    {
-                        KNearestNeighborsCount = k,
-                        Fields = { "vectorContent" }
-                    }
-                }
+                Filter = filter,
+                Size = top,
+                Select = { "id", "manufacturer", "pole_marking", "usga_lot_num", "constCode", "ballSpecs", "dimples", "spin", "pole_2", "colour", "seam_marking", "imageUrl" },
+                IncludeTotalCount = true
             };
-        }
 
-        if (hybrid || semantic)
-        {
-            searchOptions.QueryType = SearchQueryType.Semantic;
-            searchOptions.SemanticSearch = new SemanticSearchOptions
+            if (!textOnly)
             {
-                SemanticConfigurationName = "golf-semantic-config",
-                QueryCaption = new QueryCaption(QueryCaptionType.Extractive),
-                QueryAnswer = new QueryAnswer(QueryAnswerType.Extractive),
-            };
-        }
-
-        string? queryText = (textOnly || hybrid || semantic) ? query : null;
-        SearchResults<SearchDocument> response = await _searchClient.SearchAsync<SearchDocument>(queryText, searchOptions);
-
-        var golfballDataList = new List<GolfBallAISearch>();
-        await foreach (var result in response.GetResultsAsync())
-        {
-            if (result.SemanticSearch?.RerankerScore >= minRerankerScore)
-            {
-                var golfBall = new GolfBallAISearch
+                searchOptions.VectorSearch = new()
                 {
-                    ReRankerScore = result.SemanticSearch?.RerankerScore.ToString() ?? result.Score.ToString(),
-                    Manufacturer = result.Document["manufacturer"]?.ToString() ?? string.Empty,
-                    Pole_Marking = result.Document["pole_marking"]?.ToString() ?? string.Empty,
-                    USGA_Lot_Num = result.Document["usga_lot_num"]?.ToString() ?? string.Empty,
-                    ConstCode = result.Document["constCode"]?.ToString() ?? string.Empty,
-                    BallSpecs = result.Document["ballSpecs"]?.ToString() ?? string.Empty,
-                    Dimples = result.Document["dimples"]?.ToString() ?? string.Empty,
-                    Spin = result.Document["spin"]?.ToString() ?? string.Empty,
-                    Pole_2 = result.Document["pole_2"]?.ToString() ?? string.Empty,
-                    Colour = result.Document["colour"]?.ToString() ?? string.Empty,
-                    Seam_Marking = result.Document["seam_marking"]?.ToString() ?? string.Empty,
-                    ImageUrl = result.Document["imageUrl"]?.ToString() ?? string.Empty
+                    Queries = {
+                        new VectorizableTextQuery(text: query)
+                        {
+                            KNearestNeighborsCount = k,
+                            Fields = { "vectorContent" }
+                        }
+                    }
                 };
-
-                golfballDataList.Add(golfBall);
             }
-        }
 
-        _logger.LogInformation($"Found {golfballDataList.Count} golf ball matches.");
-        return golfballDataList;
+            if (hybrid || semantic)
+            {
+                searchOptions.QueryType = SearchQueryType.Semantic;
+                searchOptions.SemanticSearch = new SemanticSearchOptions
+                {
+                    SemanticConfigurationName = "golf-semantic-config",
+                    QueryCaption = new QueryCaption(QueryCaptionType.Extractive),
+                    QueryAnswer = new QueryAnswer(QueryAnswerType.Extractive),
+                };
+            }
+
+            string? queryText = (textOnly || hybrid || semantic) ? query : null;
+            SearchResults<SearchDocument> response = await _searchClient.SearchAsync<SearchDocument>(queryText, searchOptions).ConfigureAwait(false);
+
+            var golfballDataList = new List<GolfBallAISearch>();
+            await foreach (var result in response.GetResultsAsync().ConfigureAwait(false))
+            {
+                if (result.SemanticSearch?.RerankerScore >= minRerankerScore)
+                {
+                    var golfBall = new GolfBallAISearch
+                    {
+                        ReRankerScore = result.SemanticSearch?.RerankerScore.ToString() ?? result.Score.ToString(),
+                        Manufacturer = result.Document["manufacturer"]?.ToString() ?? string.Empty,
+                        Pole_Marking = result.Document["pole_marking"]?.ToString() ?? string.Empty,
+                        USGA_Lot_Num = result.Document["usga_lot_num"]?.ToString() ?? string.Empty,
+                        ConstCode = result.Document["constCode"]?.ToString() ?? string.Empty,
+                        BallSpecs = result.Document["ballSpecs"]?.ToString() ?? string.Empty,
+                        Dimples = result.Document["dimples"]?.ToString() ?? string.Empty,
+                        Spin = result.Document["spin"]?.ToString() ?? string.Empty,
+                        Pole_2 = result.Document["pole_2"]?.ToString() ?? string.Empty,
+                        Colour = result.Document["colour"]?.ToString() ?? string.Empty,
+                        Seam_Marking = result.Document["seam_marking"]?.ToString() ?? string.Empty,
+                        ImageUrl = result.Document["imageUrl"]?.ToString() ?? string.Empty
+                    };
+
+                    golfballDataList.Add(golfBall);
+                }
+            }
+
+            _logger.LogInformation($"Found {golfballDataList.Count} golf ball matches.");
+            return golfballDataList;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching for golf balls.");
+            throw;
+        }
     }
 }
