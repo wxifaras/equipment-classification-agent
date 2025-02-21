@@ -244,8 +244,6 @@ public class AzureAISearchService : IAzureAISearchService
         var golfballDataList = new List<GolfBallAISearch>();
         await foreach (var result in response.GetResultsAsync())
         {
-            double? relevanceScore = result.SemanticSearch?.RerankerScore ?? result.Score;
-
             if (result.SemanticSearch?.RerankerScore >= minRerankerScore)
             {
                 var golfBall = new GolfBallAISearch
