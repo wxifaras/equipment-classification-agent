@@ -7,6 +7,7 @@ using OpenAI.Chat;
 using Newtonsoft.Json.Schema.Generation;
 using Newtonsoft.Json.Linq;
 using Azure.Search.Documents;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace equipment_classification_agent_api.Services;
 
@@ -22,12 +23,15 @@ public class AzureOpenAIService : IAzureOpenAIService
     private readonly AzureStorageService _azureStorageService;
     private readonly IAzureAISearchService _azureAISearchService;
     private readonly string _deploymentName;
+    private readonly IMemoryCache _memoryCache;
 
     public AzureOpenAIService(
-        IOptions<AzureOpenAIOptions> options, 
+        IOptions<AzureOpenAIOptions> options,
         ILogger<AzureOpenAIService> logger,
         AzureStorageService azureStorageService,
-        IAzureAISearchService azureAISearchService, SearchClient searchClient)
+        IAzureAISearchService azureAISearchService,
+        SearchClient searchClient,
+        IMemoryCache memoryCache)
     {
         _azureOpenAIClient = new(
             new Uri(options.Value.AzureOpenAIEndPoint),
@@ -37,6 +41,7 @@ public class AzureOpenAIService : IAzureOpenAIService
         _azureStorageService = azureStorageService;
         _logger = logger;
         _azureAISearchService = azureAISearchService;
+        _memoryCache = memoryCache;
     }
 
     public async Task<EquipmentClassificationResponse> ExtractImageDetailsAsync(EquipmentClassificationRequest request)
@@ -98,7 +103,7 @@ public class AzureOpenAIService : IAzureOpenAIService
                 var jsonObject = JObject.Parse(jsonResponse);
                 var golfBallDetail = jsonObject.ToObject<GolfBallLLMDetail>();
 
-                response.AzureAISearchQuery = await _azureAISearchService.SearchGolfBallAsync(properties!, filter:$"colour eq '{golfBallDetail?.colour}'");
+                response.AzureAISearchQuery = await _azureAISearchService.SearchGolfBallAsync(properties!, filter: $"colour eq '{golfBallDetail?.colour}'");
             }
             else
             {
@@ -154,11 +159,11 @@ public class AzureOpenAIService : IAzureOpenAIService
             if (!string.IsNullOrWhiteSpace(golfBallDetail.seam_marking))
             {
                 seamMarkingText = $"seam_marking:{golfBallDetail.seam_marking}";
-            }            
+            }
 
             if (!string.IsNullOrWhiteSpace(seamMarkingText))
             {
-                properties.Add(" "+seamMarkingText);
+                properties.Add(" " + seamMarkingText);
             }
 
             return string.Join(" and ", properties);
@@ -168,5 +173,12 @@ public class AzureOpenAIService : IAzureOpenAIService
             _logger.LogError($"Error parsing JSON response: {ex.Message}");
             return null;
         }
+    }
+
+    private List<string> GetManufacturers()
+    {
+        _memoryCache.TryGetValue("Manufacturers", out List<string> manufacturers);
+        
+        return manufacturers;
     }
 }

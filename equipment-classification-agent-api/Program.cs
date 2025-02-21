@@ -6,6 +6,7 @@ using equipment_classification_agent_api.Services;
 using Microsoft.Extensions.Options;
 using Azure.AI.OpenAI;
 using Azure.Search.Documents;
+using Microsoft.Extensions.Caching.Memory;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +50,8 @@ builder.Services.AddOptions<AzureSQLOptions>()
 builder.Services.AddOptions<AzureStorageOptions>()
            .Bind(builder.Configuration.GetSection(AzureStorageOptions.AzureStorage))
            .ValidateDataAnnotations();
+
+builder.Services.AddMemoryCache();
 
 builder.Services.AddSingleton<IAzureSQLService>(sp =>
 {
@@ -108,8 +111,9 @@ builder.Services.AddSingleton<IAzureOpenAIService>(sp =>
     var azureStorageService = sp.GetRequiredService<AzureStorageService>();
     var azureAISearchService = sp.GetRequiredService<IAzureAISearchService>();
     var searchClient = sp.GetRequiredService<SearchClient>();
+    var memoryCache = sp.GetRequiredService<IMemoryCache>();
 
-    return new AzureOpenAIService(azureOpenAIOptions, logger, azureStorageService, azureAISearchService, searchClient);
+    return new AzureOpenAIService(azureOpenAIOptions, logger, azureStorageService, azureAISearchService, searchClient, memoryCache);
 });
 
 builder.Services.AddEndpointsApiExplorer();

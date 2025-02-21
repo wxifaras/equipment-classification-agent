@@ -8,6 +8,7 @@ namespace equipment_classification_agent_api.Services;
 public interface IAzureSQLService
 {
     Task<List<GolfBall>> GetGolfBallsAsync();
+    Task<List<string>> GetManufacturers();
 }
 
 public class AzureSQLService : IAzureSQLService
@@ -35,5 +36,19 @@ public class AzureSQLService : IAzureSQLService
         }
 
         return golfBalls;
+    }
+
+    public async Task<List<string>> GetManufacturers()
+    {
+        var sql = "SELECT DISTINCT manufacturer FROM [dbo].[tblGolfBalls]";
+        var manufacturers = new List<string>();
+
+        using (var connection = new SqlConnection(_connectionString))
+        {
+            await connection.OpenAsync();
+            manufacturers = (List<string>)await connection.QueryAsync<string>(sql);
+        }
+
+        return manufacturers;
     }
 }
