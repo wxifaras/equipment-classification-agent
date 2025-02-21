@@ -59,11 +59,12 @@ public class AzureOpenAIService : IAzureOpenAIService
             imageUrlList.Add(imageUrl);
         }
 
-        // TODO: Get manufacturers from cache and inject into prompt.
-        // var manufacturers = await _cacheService.GetManufacturers();
+        var manufacturers = await _cacheService.GetManufacturers();
+
+        string commaSeparatedManufacturers = string.Join(", ", manufacturers);
 
         // Get the system prompt
-        var systemPrompt = CorePrompts.GetSystemPrompt();
+        var systemPrompt = CorePrompts.GetSystemPrompt(commaSeparatedManufacturers);
 
         ChatImageDetailLevel? imageDetailLevel = ChatImageDetailLevel.High;
         var messages = new List<ChatMessage>
@@ -142,26 +143,23 @@ public class AzureOpenAIService : IAzureOpenAIService
 
             var properties = new List<string>();
 
-            if (!string.IsNullOrWhiteSpace(golfBallDetail.manufacturer))
+            if (!string.IsNullOrWhiteSpace(golfBallDetail.manufacturer) && !golfBallDetail.manufacturer.Equals("unknown"))
             {
                 properties.Add($"manufacturer:{golfBallDetail.manufacturer}");
             }
 
-            if (!string.IsNullOrWhiteSpace(golfBallDetail.colour))
-            {
-                properties.Add($"colour:{golfBallDetail.colour}");
-            }
-
             if (!string.IsNullOrWhiteSpace(golfBallDetail.pole_marking))
             {
-                properties.Add($"pole_marking:{golfBallDetail.pole_marking}");
+                //properties.Add($"pole_marking:{golfBallDetail.pole_marking}");
+                properties.Add($"{golfBallDetail.pole_marking}");
             }
 
             var seamMarkingText = string.Empty;
 
             if (!string.IsNullOrWhiteSpace(golfBallDetail.seam_marking))
             {
-                seamMarkingText = $"seam_marking:{golfBallDetail.seam_marking}";
+                //seamMarkingText = $"seam_marking:{golfBallDetail.seam_marking}";
+                seamMarkingText = $"{golfBallDetail.seam_marking}";
             }
 
             if (!string.IsNullOrWhiteSpace(seamMarkingText))
