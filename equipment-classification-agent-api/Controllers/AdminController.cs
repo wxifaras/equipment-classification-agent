@@ -1,6 +1,5 @@
 ﻿using Asp.Versioning;
 using equipment_classification_agent_api.Services;
-using Azure.Search.Documents.Indexes.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
 
