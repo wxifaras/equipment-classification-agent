@@ -120,6 +120,7 @@ public class AzureAISearchService : IAzureAISearchService
                                 new SemanticField("manufacturer"),
                                 new SemanticField("colour"),
                                 new SemanticField("pole_marking"),
+                                new SemanticField("pole_2"),
                                 new SemanticField("seam_marking")
                             }
                         })
@@ -187,6 +188,7 @@ public class AzureAISearchService : IAzureAISearchService
             {
                 string textForEmbedding = $"manufacturer: {golfBall.Manufacturer}, " +
                                           $"pole_marking: {golfBall.Pole_Marking}, " +
+                                          $"pole_2: {golfBall.Pole_2}, " +
                                           $"colour: {golfBall.Colour}, " +
                                           $"seam_marking: {golfBall.Seam_Marking}";
 
@@ -227,6 +229,7 @@ public class AzureAISearchService : IAzureAISearchService
             var searchOptions = new SearchOptions
             {
                 Filter = filter,
+                SearchFields = { "pole_marking", "pole_2", "seam_marking" },
                 Size = top,
                 Select = { "id", "manufacturer", "pole_marking", "usga_lot_num", "constCode", "ballSpecs", "dimples", "spin", "pole_2", "colour", "seam_marking", "imageUrl" },
                 IncludeTotalCount = true
@@ -257,8 +260,7 @@ public class AzureAISearchService : IAzureAISearchService
                 };
             }
 
-            string? queryText = (textOnly || hybrid || semantic) ? query : null;
-            SearchResults<SearchDocument> response = await _searchClient.SearchAsync<SearchDocument>(queryText, searchOptions).ConfigureAwait(false);
+            SearchResults<SearchDocument> response = await _searchClient.SearchAsync<SearchDocument>(query, searchOptions).ConfigureAwait(false);
 
             var golfballDataList = new List<GolfBallAISearch>();
             await foreach (var result in response.GetResultsAsync().ConfigureAwait(false))
