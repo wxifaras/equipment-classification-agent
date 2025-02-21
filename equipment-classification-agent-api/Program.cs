@@ -104,6 +104,14 @@ builder.Services.AddSingleton<AzureStorageService>(sp =>
     return new AzureStorageService(azureStorageOptions,logger);
 });
 
+builder.Services.AddSingleton<ICacheService>(sp =>
+{
+    var memoryCache = sp.GetRequiredService<IMemoryCache>();
+    var logger = sp.GetRequiredService<ILogger<CacheService>>();
+    var azureSqlService = sp.GetRequiredService<IAzureSQLService>();
+    return new CacheService(memoryCache, logger, azureSqlService);
+});
+
 builder.Services.AddSingleton<IAzureOpenAIService>(sp =>
 {
     var azureOpenAIOptions = sp.GetRequiredService<IOptions<AzureOpenAIOptions>>();
@@ -111,10 +119,11 @@ builder.Services.AddSingleton<IAzureOpenAIService>(sp =>
     var azureStorageService = sp.GetRequiredService<AzureStorageService>();
     var azureAISearchService = sp.GetRequiredService<IAzureAISearchService>();
     var searchClient = sp.GetRequiredService<SearchClient>();
-    var memoryCache = sp.GetRequiredService<IMemoryCache>();
+    var cacheService = sp.GetRequiredService<ICacheService>();
 
-    return new AzureOpenAIService(azureOpenAIOptions, logger, azureStorageService, azureAISearchService, searchClient, memoryCache);
+    return new AzureOpenAIService(azureOpenAIOptions, logger, azureStorageService, azureAISearchService, searchClient, cacheService);
 });
+
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

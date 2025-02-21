@@ -23,7 +23,7 @@ public class AzureOpenAIService : IAzureOpenAIService
     private readonly AzureStorageService _azureStorageService;
     private readonly IAzureAISearchService _azureAISearchService;
     private readonly string _deploymentName;
-    private readonly IMemoryCache _memoryCache;
+    private readonly ICacheService _cacheService;
 
     public AzureOpenAIService(
         IOptions<AzureOpenAIOptions> options,
@@ -31,7 +31,7 @@ public class AzureOpenAIService : IAzureOpenAIService
         AzureStorageService azureStorageService,
         IAzureAISearchService azureAISearchService,
         SearchClient searchClient,
-        IMemoryCache memoryCache)
+        ICacheService cacheService)
     {
         _azureOpenAIClient = new(
             new Uri(options.Value.AzureOpenAIEndPoint),
@@ -41,7 +41,7 @@ public class AzureOpenAIService : IAzureOpenAIService
         _azureStorageService = azureStorageService;
         _logger = logger;
         _azureAISearchService = azureAISearchService;
-        _memoryCache = memoryCache;
+        _cacheService = cacheService;
     }
 
     public async Task<EquipmentClassificationResponse> ExtractImageDetailsAsync(EquipmentClassificationRequest request)
@@ -58,6 +58,9 @@ public class AzureOpenAIService : IAzureOpenAIService
             var imageUrl = await _azureStorageService.GenerateSasUriAsync(fileName);
             imageUrlList.Add(imageUrl);
         }
+
+        // TODO: Get manufacturers from cache and inject into prompt.
+        // var manufacturers = await _cacheService.GetManufacturers();
 
         // Get the system prompt
         var systemPrompt = CorePrompts.GetSystemPrompt();
@@ -173,12 +176,5 @@ public class AzureOpenAIService : IAzureOpenAIService
             _logger.LogError($"Error parsing JSON response: {ex.Message}");
             return null;
         }
-    }
-
-    private List<string> GetManufacturers()
-    {
-        _memoryCache.TryGetValue("Manufacturers", out List<string> manufacturers);
-        
-        return manufacturers;
     }
 }
