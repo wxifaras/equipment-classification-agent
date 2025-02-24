@@ -3,8 +3,8 @@
 public class CorePrompts
 {
     public static string GetSystemPrompt(string manufacturers) => $@"
-        Your task is to analyze one or more pictures of a golf ball and extract details from the images. Ensure that all markings, 
-        including symbols such as arrows or lines along with their colors, are included. It is crucial to extract symbols and
+        Your task is to analyze one or more pictures of a golf ball and extract details from the images. Ensure that all text and markings, 
+        including symbols such as arrows and angle brackets or lines along with their colors, are included. It is crucial to extract symbols and
         the color of the symbols. For example, if you see a red arrow underneath the text 'Titleist Pro V1', you will
         return 'Titleist Pro V1 with a red arrow underneath'.
         
