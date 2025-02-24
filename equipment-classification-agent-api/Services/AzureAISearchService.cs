@@ -120,7 +120,8 @@ public class AzureAISearchService : IAzureAISearchService
                                 new SemanticField("manufacturer"),
                                 new SemanticField("colour"),
                                 new SemanticField("pole_marking"),
-                                new SemanticField("seam_marking")
+                                new SemanticField("seam_marking"),
+                                new SemanticField("pole_2")
                             }
                         })
                     }
@@ -188,7 +189,8 @@ public class AzureAISearchService : IAzureAISearchService
                 string textForEmbedding = $"manufacturer: {golfBall.Manufacturer}, " +
                                           $"pole_marking: {golfBall.Pole_Marking}, " +
                                           $"colour: {golfBall.Colour}, " +
-                                          $"seam_marking: {golfBall.Seam_Marking}";
+                                          $"seam_marking: {golfBall.Seam_Marking}" +
+                                          $"pole_2: {golfBall.Pole_2}";
 
                 OpenAIEmbedding embedding = await embeddingClient.GenerateEmbeddingAsync(textForEmbedding).ConfigureAwait(false);
                 golfBall.VectorContent = embedding.ToFloats().ToArray().ToList();
