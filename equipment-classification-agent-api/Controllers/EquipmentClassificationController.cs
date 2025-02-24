@@ -59,14 +59,16 @@ public class EquipmentClassificationController : ControllerBase
             }
 
             var queryTuple = await _azureOpenAIService.ExtractImageDetailsAsync(request);
-            var response = new EquipmentClassificationResponse();
-            response.AzureAISearchQuery = await _azureAISearchService.SearchGolfBallAsync(queryTuple.nlpQuery,filter: queryTuple.filter);
+            _logger.LogInformation($"NLP Query: {queryTuple.nlpQuery} Filter: {queryTuple.filter}");
 
-            return Ok(new
-            {
-                sessionId,
-                azureAISearchQuery = response.AzureAISearchQuery
-            });
+            var response = new EquipmentClassificationResponse();
+            
+            response.AzureAISearchQueryResults = await _azureAISearchService.SearchGolfBallAsync(queryTuple.nlpQuery,filter: queryTuple.filter);
+            response.SessionId = sessionId;
+            response.NLPQuery = queryTuple.nlpQuery;
+            response.AISearchFilter = queryTuple.filter;
+            
+            return Ok(response);
         }
         catch (Exception ex)
         {

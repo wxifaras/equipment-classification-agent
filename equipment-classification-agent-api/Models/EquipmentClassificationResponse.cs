@@ -3,5 +3,7 @@
 public class EquipmentClassificationResponse
 {
     public string SessionId { get; set; }
-    public List<GolfBallAISearch> AzureAISearchQuery { get; set; }
+    public List<GolfBallAISearch> AzureAISearchQueryResults { get; set; }
+    public string AISearchFilter { get; set; }
+    public string NLPQuery { get; set; }
 }
