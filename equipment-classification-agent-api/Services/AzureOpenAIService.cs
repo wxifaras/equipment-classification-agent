@@ -98,7 +98,7 @@ public class AzureOpenAIService : IAzureOpenAIService
             {
                 _logger.LogInformation($"Result: {completion.Content[0].Text}");
                 jsonResponse = $"{completion.Content[0].Text}";
-                var properties = FetchPropertiesFromJson(jsonResponse);
+                //var properties = FetchPropertiesFromJson(jsonResponse);
 
                 var jsonObject = JObject.Parse(jsonResponse);
                 var golfBallDetail = jsonObject.ToObject<GolfBallLLMDetail>();
