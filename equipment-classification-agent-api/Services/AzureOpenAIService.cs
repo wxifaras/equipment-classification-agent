@@ -7,6 +7,7 @@ using OpenAI.Chat;
 using Newtonsoft.Json.Schema.Generation;
 using Newtonsoft.Json.Linq;
 using Azure.Search.Documents;
+using System;
 
 namespace equipment_classification_agent_api.Services;
 
@@ -22,13 +23,15 @@ public class AzureOpenAIService : IAzureOpenAIService
     private readonly AzureStorageService _azureStorageService;
     private readonly string _deploymentName;
     private readonly ICacheService _cacheService;
+    private readonly IChatHistoryService _chatHistoryService;
 
     public AzureOpenAIService(
         IOptions<AzureOpenAIOptions> options,
         ILogger<AzureOpenAIService> logger,
         AzureStorageService azureStorageService,
         SearchClient searchClient,
-        ICacheService cacheService)
+        ICacheService cacheService,
+        IChatHistoryService chatHistoryService)
     {
         _azureOpenAIClient = new(
             new Uri(options.Value.AzureOpenAIEndPoint),
@@ -38,6 +41,7 @@ public class AzureOpenAIService : IAzureOpenAIService
         _azureStorageService = azureStorageService;
         _logger = logger;
         _cacheService = cacheService;
+        _chatHistoryService = chatHistoryService;
     }
 
     public async Task<(string nlpQuery, string filter)> ExtractImageDetailsAsync(EquipmentClassificationRequest request)
@@ -45,8 +49,8 @@ public class AzureOpenAIService : IAzureOpenAIService
         (string nlpQuery, string filter) queryTuple  = (string.Empty, string.Empty);
         var chatClient = _azureOpenAIClient.GetChatClient(_deploymentName);
         var imageUrlList = new List<string>();
-
-        string fileName = string.Empty;
+        var fileName = string.Empty;
+        var userPrompt = "Analyze these images:";
 
         foreach (var image in request.Images)
         {
@@ -57,19 +61,19 @@ public class AzureOpenAIService : IAzureOpenAIService
 
         var manufacturers = await _cacheService.GetManufacturers();
 
-        string commaSeparatedManufacturers = string.Join(", ", manufacturers);
+        var commaSeparatedManufacturers = string.Join(", ", manufacturers);
 
         // Get the system prompt
         var systemPrompt = CorePrompts.GetSystemPrompt(commaSeparatedManufacturers);
 
         ChatImageDetailLevel? imageDetailLevel = ChatImageDetailLevel.High;
-        var messages = new List<ChatMessage>
+        var messages = new List<OpenAI.Chat.ChatMessage>
         {
             new SystemChatMessage(systemPrompt),
             new UserChatMessage(
             new List<ChatMessageContentPart>
             {
-                ChatMessageContentPart.CreateTextPart("Analyze these images:"),
+                ChatMessageContentPart.CreateTextPart(userPrompt),
             }.Concat(imageUrlList.Select(url => ChatMessageContentPart.CreateImagePart(new Uri(url), imageDetailLevel))).ToList())
         };
 
@@ -102,10 +106,41 @@ public class AzureOpenAIService : IAzureOpenAIService
                 var jsonObject = JObject.Parse(jsonResponse);
                 var golfBallDetail = jsonObject.ToObject<GolfBallLLMDetail>();
 
+                //await _chatHistoryService.CreateChatSessionAsync(request.SessionId, DateTime.UtcNow);
+                //foreach (var message in messages)
+                //{
+                //    var role = string.Empty;
+                //    if (message is OpenAI.Chat.SystemChatMessage)
+                //    {
+                //        role = ChatRole.System.ToString();
+                //        await _chatHistoryService.CreateChatMessageAsync(request.SessionId, role, message.Content[0].Text);
+                //    }
+
+                //    if (message is OpenAI.Chat.UserChatMessage)
+                //    {
+                //        role = ChatRole.User.ToString();
+
+                //        foreach(var content in message.Content)
+                //        {
+                //            if (content.Kind == ChatMessageContentPartKind.Text)
+                //            {
+                //                await _chatHistoryService.CreateChatMessageAsync(request.SessionId, role, content.Text, DateTime.UtcNow);
+                //            }
+
+                //            if (content.Kind == ChatMessageContentPartKind.Image)
+                //            {
+                //                await _chatHistoryService.CreateChatMessageAsync(request.SessionId, role, content.ImageUri.ToString(), DateTime.UtcNow);
+                //            }
+                //        }
+                //    }
+                //}
+
+                //await _chatHistoryService.CreateChatMessageAsync(request.SessionId, ChatRole.Assistant.ToString(), jsonResponse, DateTime.UtcNow);
+
                 // 2nd LLM call for NLP query
                 var nlpPrompt = CorePrompts.GetNlpPrompt(jsonObject.ToString());
                 
-                messages = new List<ChatMessage>
+                messages = new List<OpenAI.Chat.ChatMessage>
                 {
                     new SystemChatMessage(nlpPrompt)                 
                 };
@@ -113,6 +148,9 @@ public class AzureOpenAIService : IAzureOpenAIService
                 completion = await chatClient.CompleteChatAsync(messages);
                 var nlpQuery = completion.Content[0].Text;
                 queryTuple = (nlpQuery, filter: $"colour eq '{golfBallDetail?.colour}'");
+
+                //await _chatHistoryService.CreateChatMessageAsync(request.SessionId, ChatRole.System.ToString(), nlpPrompt, DateTime.UtcNow);
+                //await _chatHistoryService.CreateChatMessageAsync(request.SessionId, ChatRole.Assistant.ToString(), nlpQuery, DateTime.UtcNow);
             }
             else
             {
