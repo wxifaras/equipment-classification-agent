@@ -189,7 +189,7 @@ public class AzureAISearchService : IAzureAISearchService
                 string textForEmbedding = $"manufacturer: {golfBall.Manufacturer}, " +
                                           $"pole_marking: {golfBall.Pole_Marking}, " +
                                           $"colour: {golfBall.Colour}, " +
-                                          $"seam_marking: {golfBall.Seam_Marking}" +
+                                          $"seam_marking: {golfBall.Seam_Marking}, " +
                                           $"pole_2: {golfBall.Pole_2}";
 
                 OpenAIEmbedding embedding = await embeddingClient.GenerateEmbeddingAsync(textForEmbedding).ConfigureAwait(false);
