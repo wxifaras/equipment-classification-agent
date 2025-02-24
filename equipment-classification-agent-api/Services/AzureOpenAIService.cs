@@ -105,52 +105,21 @@ public class AzureOpenAIService : IAzureOpenAIService
 
                 var jsonObject = JObject.Parse(jsonResponse);
                 var golfBallDetail = jsonObject.ToObject<GolfBallLLMDetail>();
-
-                //await _chatHistoryService.CreateChatSessionAsync(request.SessionId, DateTime.UtcNow);
-                //foreach (var message in messages)
-                //{
-                //    var role = string.Empty;
-                //    if (message is OpenAI.Chat.SystemChatMessage)
-                //    {
-                //        role = ChatRole.System.ToString();
-                //        await _chatHistoryService.CreateChatMessageAsync(request.SessionId, role, message.Content[0].Text);
-                //    }
-
-                //    if (message is OpenAI.Chat.UserChatMessage)
-                //    {
-                //        role = ChatRole.User.ToString();
-
-                //        foreach(var content in message.Content)
-                //        {
-                //            if (content.Kind == ChatMessageContentPartKind.Text)
-                //            {
-                //                await _chatHistoryService.CreateChatMessageAsync(request.SessionId, role, content.Text, DateTime.UtcNow);
-                //            }
-
-                //            if (content.Kind == ChatMessageContentPartKind.Image)
-                //            {
-                //                await _chatHistoryService.CreateChatMessageAsync(request.SessionId, role, content.ImageUri.ToString(), DateTime.UtcNow);
-                //            }
-                //        }
-                //    }
-                //}
-
-                //await _chatHistoryService.CreateChatMessageAsync(request.SessionId, ChatRole.Assistant.ToString(), jsonResponse, DateTime.UtcNow);
+                //await _chatHistoryService.SaveChatHistoryAsync(request, messages, jsonResponse);
 
                 // 2nd LLM call for NLP query
                 var nlpPrompt = CorePrompts.GetNlpPrompt(jsonObject.ToString());
-                
+
                 messages = new List<OpenAI.Chat.ChatMessage>
                 {
-                    new SystemChatMessage(nlpPrompt)                 
+                    new SystemChatMessage(nlpPrompt)
                 };
 
                 completion = await chatClient.CompleteChatAsync(messages);
                 var nlpQuery = completion.Content[0].Text;
                 queryTuple = (nlpQuery, filter: $"colour eq '{golfBallDetail?.colour}'");
 
-                //await _chatHistoryService.CreateChatMessageAsync(request.SessionId, ChatRole.System.ToString(), nlpPrompt, DateTime.UtcNow);
-                //await _chatHistoryService.CreateChatMessageAsync(request.SessionId, ChatRole.Assistant.ToString(), nlpQuery, DateTime.UtcNow);
+                //await _chatHistoryService.SaveChatHistoryAsync(request, nlpPrompt, nlpQuery);
             }
             else
             {
