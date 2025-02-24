@@ -24,4 +24,10 @@ public class CorePrompts
             \""seam_markings\"": \""seam markings\"",
             \""pole_markings\"": \""pole markings\""
         }}";
+
+    public static string GetNlpPrompt(string json) => $@"
+        Convert the following JSON into an Azure AI Search natural language processing (NLP) query. Ensure the output is a concise, complete sentence suitable for search input, and contains only the query without any additional text.
+
+        JSON:
+        {json}";
 }

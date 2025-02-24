@@ -2,7 +2,6 @@
 using equipment_classification_agent_api.Models;
 using equipment_classification_agent_api.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace equipment_classification_agent_api.Controllers;
 
@@ -14,15 +13,18 @@ public class EquipmentClassificationController : ControllerBase
     private readonly ILogger<EquipmentClassificationController> _logger;
     private readonly AzureStorageService _azureStorageService;
     private readonly IAzureOpenAIService _azureOpenAIService;
+    private readonly IAzureAISearchService _azureAISearchService;
 
     public EquipmentClassificationController(
         ILogger<EquipmentClassificationController> logger,
         AzureStorageService azureStorageService,
-        IAzureOpenAIService azureOpenAIService)
+        IAzureOpenAIService azureOpenAIService,
+        IAzureAISearchService azureAISearchService)
     {
         _logger = logger;
         _azureStorageService = azureStorageService;
         _azureOpenAIService = azureOpenAIService;
+        _azureAISearchService = azureAISearchService;
     }
 
     [MapToApiVersion("1.0")]
@@ -56,11 +58,13 @@ public class EquipmentClassificationController : ControllerBase
                await _azureStorageService.UploadImageAsync(image.OpenReadStream(), image.FileName, sessionId);
             }
 
-            var response= await _azureOpenAIService.ExtractImageDetailsAsync(request);
+            var queryTuple = await _azureOpenAIService.ExtractImageDetailsAsync(request);
+            var response = new EquipmentClassificationResponse();
+            response.AzureAISearchQuery = await _azureAISearchService.SearchGolfBallAsync(queryTuple.nlpQuery,filter: queryTuple.filter);
 
             return Ok(new
             {
-                sessionId = response.SessionId,
+                sessionId,
                 azureAISearchQuery = response.AzureAISearchQuery
             });
         }

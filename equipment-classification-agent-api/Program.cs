@@ -117,11 +117,10 @@ builder.Services.AddSingleton<IAzureOpenAIService>(sp =>
     var azureOpenAIOptions = sp.GetRequiredService<IOptions<AzureOpenAIOptions>>();
     var logger = sp.GetRequiredService<ILogger<AzureOpenAIService>>();
     var azureStorageService = sp.GetRequiredService<AzureStorageService>();
-    var azureAISearchService = sp.GetRequiredService<IAzureAISearchService>();
     var searchClient = sp.GetRequiredService<SearchClient>();
     var cacheService = sp.GetRequiredService<ICacheService>();
 
-    return new AzureOpenAIService(azureOpenAIOptions, logger, azureStorageService, azureAISearchService, searchClient, cacheService);
+    return new AzureOpenAIService(azureOpenAIOptions, logger, azureStorageService, searchClient, cacheService);
 });
 
 

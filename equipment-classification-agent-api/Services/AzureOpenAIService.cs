@@ -12,7 +12,7 @@ namespace equipment_classification_agent_api.Services;
 
 public interface IAzureOpenAIService
 {
-    Task<EquipmentClassificationResponse> ExtractImageDetailsAsync(EquipmentClassificationRequest request);
+    Task<(string nlpQuery, string filter)> ExtractImageDetailsAsync(EquipmentClassificationRequest request);
 }
 
 public class AzureOpenAIService : IAzureOpenAIService
@@ -20,7 +20,6 @@ public class AzureOpenAIService : IAzureOpenAIService
     private readonly ILogger<AzureOpenAIService> _logger;
     private readonly AzureOpenAIClient _azureOpenAIClient;
     private readonly AzureStorageService _azureStorageService;
-    private readonly IAzureAISearchService _azureAISearchService;
     private readonly string _deploymentName;
     private readonly ICacheService _cacheService;
 
@@ -28,7 +27,6 @@ public class AzureOpenAIService : IAzureOpenAIService
         IOptions<AzureOpenAIOptions> options,
         ILogger<AzureOpenAIService> logger,
         AzureStorageService azureStorageService,
-        IAzureAISearchService azureAISearchService,
         SearchClient searchClient,
         ICacheService cacheService)
     {
@@ -39,14 +37,13 @@ public class AzureOpenAIService : IAzureOpenAIService
         _deploymentName = options.Value.AzureOpenAIDeploymentName;
         _azureStorageService = azureStorageService;
         _logger = logger;
-        _azureAISearchService = azureAISearchService;
         _cacheService = cacheService;
     }
 
-    public async Task<EquipmentClassificationResponse> ExtractImageDetailsAsync(EquipmentClassificationRequest request)
+    public async Task<(string nlpQuery, string filter)> ExtractImageDetailsAsync(EquipmentClassificationRequest request)
     {
+        (string nlpQuery, string filter) queryTuple  = (string.Empty, string.Empty);
         var chatClient = _azureOpenAIClient.GetChatClient(_deploymentName);
-        var response = new EquipmentClassificationResponse();
         var imageUrlList = new List<string>();
 
         string fileName = string.Empty;
@@ -92,9 +89,9 @@ public class AzureOpenAIService : IAzureOpenAIService
         try
         {
             var jsonResponse = string.Empty;
+
             // Create the chat completion request
             ChatCompletion completion = await chatClient.CompleteChatAsync(messages, options);
-            response.SessionId = request.SessionId;
 
             // Print the response
             if (completion.Content != null && completion.Content.Count > 0)
@@ -106,7 +103,17 @@ public class AzureOpenAIService : IAzureOpenAIService
                 var jsonObject = JObject.Parse(jsonResponse);
                 var golfBallDetail = jsonObject.ToObject<GolfBallLLMDetail>();
 
-                response.AzureAISearchQuery = await _azureAISearchService.SearchGolfBallAsync(properties!, filter: $"colour eq '{golfBallDetail?.colour}'");
+                // 2nd LLM call for NLP query
+                var nlpPrompt = CorePrompts.GetNlpPrompt(jsonObject.ToString());
+                
+                messages = new List<ChatMessage>
+                {
+                    new SystemChatMessage(nlpPrompt)                 
+                };
+
+                completion = await chatClient.CompleteChatAsync(messages);
+                var nlpQuery = completion.Content[0].Text;
+                queryTuple = (nlpQuery, filter: $"colour eq '{golfBallDetail?.colour}'");
             }
             else
             {
@@ -118,7 +125,7 @@ public class AzureOpenAIService : IAzureOpenAIService
             _logger.LogInformation($"An error occurred: {ex.Message}");
         }
 
-        return response;
+        return queryTuple;
     }
 
     public string? FetchPropertiesFromJson(string llmJsonResult)
