@@ -231,7 +231,10 @@ public class AzureAISearchService : IAzureAISearchService
                 Filter = filter,
                 Size = top,
                 Select = { "id", "manufacturer", "pole_marking", "usga_lot_num", "constCode", "ballSpecs", "dimples", "spin", "pole_2", "colour", "seam_marking", "imageUrl" },
-                IncludeTotalCount = true
+                IncludeTotalCount = true,
+                QueryType = SearchQueryType.Semantic,
+                SearchMode = SearchMode.Any,
+                MinimumCoverage = 50
             };
 
             if (!textOnly)

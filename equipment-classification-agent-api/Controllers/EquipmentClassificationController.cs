@@ -71,7 +71,7 @@ public class EquipmentClassificationController : ControllerBase
             // to ensure that the markings are extracted properly, we are going to have the LLM evaluate this three times,
             // then we will take the list of json results from each and have another LLM evaluate the three results against
             // the images to construct a final json extraction result
-            List<GolfBallLLMDetail> golfBallDetailsList = new List<GolfBallLLMDetail>();
+            var golfBallDetailsList = new List<GolfBallLLMDetail>();
             for (int i = 0; i < 3; i++)
             {
                 var golfBallDetails = await _azureOpenAIService.ExtractImageDetailsAsync(imageUrlList, null);

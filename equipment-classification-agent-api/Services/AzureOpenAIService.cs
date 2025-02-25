@@ -56,9 +56,9 @@ public class AzureOpenAIService : IAzureOpenAIService
 
         var manufacturers = await _cacheService.GetManufacturers();
 
-        string commaSeparatedManufacturers = string.Join(", ", manufacturers);
+        var commaSeparatedManufacturers = string.Join(", ", manufacturers);
 
-        var systemPrompt = String.Empty;
+        var systemPrompt = string.Empty;
 
         // Get the system prompt
         if (golfBallLLMDetails == null)
@@ -67,8 +67,7 @@ public class AzureOpenAIService : IAzureOpenAIService
         }
         else
         {
-            string golfBallLLMDetailsJson = JsonSerializer.Serialize(golfBallLLMDetails, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
+            var golfBallLLMDetailsJson = JsonSerializer.Serialize(golfBallLLMDetails, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             systemPrompt = CorePrompts.GetFinalImageMarkingsExtractionsPrompt(commaSeparatedManufacturers, golfBallLLMDetailsJson);
         }
 
