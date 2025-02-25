@@ -7,12 +7,22 @@ using OpenAI.Chat;
 using Newtonsoft.Json.Schema.Generation;
 using Newtonsoft.Json.Linq;
 using Azure.Search.Documents;
+using System.Text.Json;
 
 namespace equipment_classification_agent_api.Services;
 
 public interface IAzureOpenAIService
 {
-    Task<(string nlpQuery, string filter)> ExtractImageDetailsAsync(EquipmentClassificationRequest request);
+    /// <summary>
+    /// Extracts image details from the given list of image URLs. If the <paramref name="golfBallLLMDetails"/> is not null, the prompt
+    /// to judge the generated GolfBallDetails it will be used to extract details from the images.
+    /// </summary>
+    /// <param name="imageUrlList"></param>
+    /// <param name="golfBallLLMDetails"></param>
+    /// <returns></returns>
+    Task<GolfBallLLMDetail> ExtractImageDetailsAsync(List<string> imageUrlList, List<GolfBallLLMDetail> golfBallLLMDetails);
+
+    Task<(string nlpQuery, string filter)> GenerateNLQueryAsync(GolfBallLLMDetail golfBallDetails);
 }
 
 public class AzureOpenAIService : IAzureOpenAIService
@@ -40,27 +50,27 @@ public class AzureOpenAIService : IAzureOpenAIService
         _cacheService = cacheService;
     }
 
-    public async Task<(string nlpQuery, string filter)> ExtractImageDetailsAsync(EquipmentClassificationRequest request)
+    public async Task<GolfBallLLMDetail> ExtractImageDetailsAsync(List<string> imageUrlList, List<GolfBallLLMDetail> golfBallLLMDetails)
     {
-        (string nlpQuery, string filter) queryTuple  = (string.Empty, string.Empty);
         var chatClient = _azureOpenAIClient.GetChatClient(_deploymentName);
-        var imageUrlList = new List<string>();
-
-        string fileName = string.Empty;
-
-        foreach (var image in request.Images)
-        {
-            fileName = $"{request.SessionId}/{image.FileName}";
-            var imageUrl = await _azureStorageService.GenerateSasUriAsync(fileName);
-            imageUrlList.Add(imageUrl);
-        }
 
         var manufacturers = await _cacheService.GetManufacturers();
 
         string commaSeparatedManufacturers = string.Join(", ", manufacturers);
 
+        var systemPrompt = String.Empty;
+
         // Get the system prompt
-        var systemPrompt = CorePrompts.GetSystemPrompt(commaSeparatedManufacturers);
+        if (golfBallLLMDetails == null)
+        {
+            systemPrompt = CorePrompts.GetImageMarkingsExtractionsPrompt(commaSeparatedManufacturers);
+        }
+        else
+        {
+            string golfBallLLMDetailsJson = JsonSerializer.Serialize(golfBallLLMDetails, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            systemPrompt = CorePrompts.GetFinalImageMarkingsExtractionsPrompt(commaSeparatedManufacturers, golfBallLLMDetailsJson);
+        }
 
         ChatImageDetailLevel? imageDetailLevel = ChatImageDetailLevel.High;
         var messages = new List<ChatMessage>
@@ -86,13 +96,14 @@ public class AzureOpenAIService : IAzureOpenAIService
             ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat("GolfBallDetail", BinaryData.FromString(jsonSchema))
         };
 
+        // Create the chat completion request
+        ChatCompletion completion = await chatClient.CompleteChatAsync(messages, options);
+
+        var golfBallDetail = new GolfBallLLMDetail();
+        var jsonResponse = string.Empty;
+
         try
         {
-            var jsonResponse = string.Empty;
-
-            // Create the chat completion request
-            ChatCompletion completion = await chatClient.CompleteChatAsync(messages, options);
-
             // Print the response
             if (completion.Content != null && completion.Content.Count > 0)
             {
@@ -100,24 +111,49 @@ public class AzureOpenAIService : IAzureOpenAIService
                 jsonResponse = $"{completion.Content[0].Text}";
 
                 var jsonObject = JObject.Parse(jsonResponse);
-                var golfBallDetail = jsonObject.ToObject<GolfBallLLMDetail>();
-
-                // 2nd LLM call for NLP query
-                var nlpPrompt = CorePrompts.GetNlpPrompt(jsonObject.ToString());
-                
-                messages = new List<ChatMessage>
-                {
-                    new SystemChatMessage(nlpPrompt)                 
-                };
-
-                completion = await chatClient.CompleteChatAsync(messages);
-                var nlpQuery = completion.Content[0].Text;
-                queryTuple = (nlpQuery, filter: $"colour eq '{golfBallDetail?.colour}'");
+                golfBallDetail = jsonObject.ToObject<GolfBallLLMDetail>();
             }
             else
             {
                 _logger.LogInformation("No response received.");
             }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInformation($"An error occurred: {ex.Message}");
+        }
+
+        return golfBallDetail;
+    }
+
+    public async Task<(string nlpQuery, string filter)> GenerateNLQueryAsync(GolfBallLLMDetail golfBallDetails)
+    {
+        var chatClient = _azureOpenAIClient.GetChatClient(_deploymentName);
+
+        (string nlpQuery, string filter) queryTuple = (string.Empty, string.Empty);
+
+        try
+        {
+            // 2nd LLM call for NLP query
+            var nlpPrompt = CorePrompts.GetNlpPrompt(golfBallDetails.ToString());
+                
+            var messages = new List<ChatMessage>
+            {
+                new SystemChatMessage(nlpPrompt)                 
+            };
+
+            ChatCompletion completion = await chatClient.CompleteChatAsync(messages);
+            
+            var nlpQuery = completion.Content[0].Text;
+            
+            var filter = $"colour eq '{golfBallDetails?.colour}'";
+            
+            if (!string.IsNullOrEmpty(golfBallDetails?.manufacturer))
+            {
+                filter += $" and manufacturer eq '{golfBallDetails?.manufacturer}'";
+            }
+
+            queryTuple = (nlpQuery, filter);
         }
         catch (Exception ex)
         {

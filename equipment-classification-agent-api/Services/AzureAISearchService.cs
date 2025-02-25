@@ -16,8 +16,8 @@ public interface IAzureAISearchService
     Task IndexDataAsync();
     Task<List<GolfBallAISearch>> SearchGolfBallAsync(
            string query,
-           int k = 3,
-           int top = 3, // top 3 results
+           int k = 5,
+           int top = 10, // top 10 results
            string? filter = null,
            bool textOnly = false,
            bool hybrid = true,
@@ -189,7 +189,7 @@ public class AzureAISearchService : IAzureAISearchService
                 string textForEmbedding = $"manufacturer: {golfBall.Manufacturer}, " +
                                           $"pole_marking: {golfBall.Pole_Marking}, " +
                                           $"colour: {golfBall.Colour}, " +
-                                          $"seam_marking: {golfBall.Seam_Marking}" +
+                                          $"seam_marking: {golfBall.Seam_Marking}, " +
                                           $"pole_2: {golfBall.Pole_2}";
 
                 OpenAIEmbedding embedding = await embeddingClient.GenerateEmbeddingAsync(textForEmbedding).ConfigureAwait(false);
@@ -216,8 +216,8 @@ public class AzureAISearchService : IAzureAISearchService
 
     public async Task<List<GolfBallAISearch>> SearchGolfBallAsync(
            string query,
-           int k = 3,
-           int top = 3, // top 3 results
+           int k = 5,
+           int top = 10, // top 10 results
            string? filter = null,
            bool textOnly = false,
            bool hybrid = true,
@@ -241,6 +241,7 @@ public class AzureAISearchService : IAzureAISearchService
                     Queries = {
                         new VectorizableTextQuery(text: query)
                         {
+                            Exhaustive = true,
                             KNearestNeighborsCount = k,
                             Fields = { "vectorContent" }
                         }
