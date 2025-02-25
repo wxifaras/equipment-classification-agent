@@ -149,9 +149,12 @@ public class AzureOpenAIService : IAzureOpenAIService
             
             if (!string.IsNullOrEmpty(golfBallDetails?.manufacturer))
             {
-                if (!golfBallDetails.manufacturer.Trim().ToLower().Equals("unknown"))
+                var manufacturer = golfBallDetails.manufacturer.Trim();
+                if (!manufacturer.Equals("unknown", StringComparison.OrdinalIgnoreCase))
                 {
-                    filter += $" and manufacturer eq '{golfBallDetails?.manufacturer}'";
+                    // Escape single quotes by doubling them
+                    var escapedManufacturer = manufacturer.Replace("'", "'");
+                    filter += $" and manufacturer eq '{escapedManufacturer}'";
                 }
             }
 
