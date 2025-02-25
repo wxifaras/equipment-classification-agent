@@ -58,8 +58,11 @@ public class CorePrompts
         }}";
 
     public static string GetNlpPrompt(string json) => $@"
-        Convert the following JSON into an Azure AI Search natural language processing (NLP) query. Ensure the output is a concise, complete sentence suitable for search input, and contains only the query
-        without any additional text. You must **not**  remove any special characters such as percent symbols ('%'), ampersands ('&'), or angle brackets ('<< >>') as these are critical to the search.
+        Convert the following JSON into an Azure AI Search natural language processing (NLP) query. Ensure the output is a concise and in complete sentence suitable for search input.
+        You must **not**  remove any special characters such as percent symbols ('%'), ampersands ('&'), or angle brackets ('<< >>') as these are critical to the search.
+        You must add quotes to important phrases or keywords that should be treated as a single entity in the search query. You must add a + sign to the front of the phrase to indicate that it is a required term.
+        For example, if the query is ""Find the best restaurants in New York,"" the result should be: Find the +""best"" +""restaurants"" in +""New York""
+        Don't add quotes to phrases or keywords that already have quotes. Don't add extra words to the query. The query should be as concise as possible.
 
         JSON:
         {json}";
