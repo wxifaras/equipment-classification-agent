@@ -149,7 +149,10 @@ public class AzureOpenAIService : IAzureOpenAIService
             
             if (!string.IsNullOrEmpty(golfBallDetails?.manufacturer))
             {
-                filter += $" and manufacturer eq '{golfBallDetails?.manufacturer}'";
+                if (!golfBallDetails.manufacturer.Trim().ToLower().Equals("unknown"))
+                {
+                    filter += $" and manufacturer eq '{golfBallDetails?.manufacturer}'";
+                }
             }
 
             queryTuple = (nlpQuery, filter);
