@@ -6,10 +6,9 @@ public class CorePrompts
         Your task is to analyze one or more pictures of a golf ball and extract details from the images. Ensure that all text, markings, 
         and symbols (such as arrows, angle brackets, lines, or other characters) along with their colors, are included **exactly as they appear** if
         they can be represented by a character. Do **not** rephrase or describe any symbols, including angle brackets, carets, percent signs, etc.
-        For example, if you see '<< Titleist Pro V1 >>', you will return '<< Titleist Pro V1 >>', not 'Titleist Pro V1 surrounded by angle brackets'.
-        If you see a percent symbol ('%') or an ampersand ('&'), return them as '%', '&', etc. Do **not** describe these symbols as words (e.g., 'percent'
-        or 'ampersand'). It is also critical that you capture the color of any symbol. For example, if you see a red arrow underneath the text
-        'Titleist Pro V1', you will return 'Titleist Pro V1 with a red arrow underneath'.
+        If you see a an angle bracket ('>'), percent symbol ('%') or an ampersand ('&'), return them as '>' '%', '&', etc. Do **not** describe these symbols
+        as words (e.g., 'angle bracket', 'percent' or 'ampersand'). It is also critical that you capture the color of any symbol. For example, if you see
+        a red arrow underneath the text 'Titleist Pro V1', you will return 'Titleist Pro V1 with a red arrow underneath'.
         
         Instructions:
         1. Manufacturer: Identify the name of the golf ball manufacturer. Store your findings in the 'manufacturer' property of the JSON structure below.
@@ -17,7 +16,8 @@ public class CorePrompts
 
             If the markings you extract do not match one of the manufacturers from the list or you are not sure, please respond with 'unknown' for the manufacturer.
         2. Color: Identify the color of the ball. Store the color in the 'color' property of the JSON structure below.
-        3. Markings: Identify any text or a combination of text and symbols on a picture. If there are symbols near or around text, capture the type of symbol along with its color. 
+        3. Markings: Identify any text or a combination of text and symbols on a picture. If there are symbols near or around text, capture the type of symbol along with its color. You
+           **must not** project any markings if you cannot clearly identify what they are. For example, if markings are partially obscured or run off of the ball, don't make any assumptions about what they are.
            Store your findings in the 'markings' property of the JSON structure below. Remember to include the symbols exactly as they appear if they can be represented with characters, 
            without describing them.
 
@@ -32,8 +32,8 @@ public class CorePrompts
         You have received multiple JSON objects representing different color, manufacturer, markings, details, and information extracted from images of a golf ball. Your task is
         to analyze and consolidate all the information into a single JSON object that best represents the golf ball's features from the images provided. Please
         carefully combine the data, remove any duplicates, and provide the most relevant details. Do **not** rephrase or describe any symbols, including angle brackets,
-        carets, percent signs, etc. For example, if you see '<< Titleist Pro V1 >>', in the JSON objects, you will return the text verbatim as '<< Titleist Pro V1 >>'.
-        Likewise, if you see a percent symbol ('%') or an ampersand ('&'), return them as '%', '&', etc.
+        carets, percent signs, etc. If you see a an angle bracket ('>'), percent symbol ('%') or an ampersand ('&'), return them as '>' '%', '&', etc. Do **not** describe these symbols
+        as words (e.g., 'angle bracket', 'percent' or 'ampersand').
 
         Here are the JSON objects from the extraction process:
 
