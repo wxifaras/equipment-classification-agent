@@ -117,8 +117,8 @@ public class AzureAISearchService : IAzureAISearchService
                         {
                             ContentFields =
                             {
-                                new SemanticField("manufacturer"),
-                                new SemanticField("colour"),
+                                //new SemanticField("manufacturer"),
+                                //new SemanticField("colour"),
                                 new SemanticField("pole_marking"),
                                 new SemanticField("seam_marking"),
                                 new SemanticField("pole_2")
@@ -186,9 +186,9 @@ public class AzureAISearchService : IAzureAISearchService
 
             foreach (var golfBall in golfBalls)
             {
-                string textForEmbedding = $"manufacturer: {golfBall.Manufacturer}, " +
+                string textForEmbedding = //$"manufacturer: {golfBall.Manufacturer}, " +
                                           $"pole_marking: {golfBall.Pole_Marking}, " +
-                                          $"colour: {golfBall.Colour}, " +
+                                          //$"colour: {golfBall.Colour}, " +
                                           $"seam_marking: {golfBall.Seam_Marking}, " +
                                           $"pole_2: {golfBall.Pole_2}";
 
