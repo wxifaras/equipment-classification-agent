@@ -133,8 +133,10 @@ public class AzureOpenAIService : IAzureOpenAIService
 
         try
         {
+            string golfBallDetailsJson = JsonSerializer.Serialize(golfBallDetails, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
             // 2nd LLM call for NLP query
-            var nlpPrompt = CorePrompts.GetNlpPrompt(golfBallDetails.ToString());
+            var nlpPrompt = CorePrompts.GetNlpPrompt(golfBallDetailsJson);
                 
             var messages = new List<ChatMessage>
             {

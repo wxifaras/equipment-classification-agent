@@ -29,7 +29,7 @@ public class CorePrompts
         }}";
 
     public static string GetFinalImageMarkingsExtractionsPrompt(string manufacturers, string json_list) => $@"
-        You have received multiple JSON objects representing different markings, details, and information extracted from images of a golf ball. Your task is
+        You have received multiple JSON objects representing different color, manufacturer, markings, details, and information extracted from images of a golf ball. Your task is
         to analyze and consolidate all the information into a single JSON object that best represents the golf ball's features from the images provided. Please
         carefully combine the data, remove any duplicates, and provide the most relevant details. Do **not** rephrase or describe any symbols, including angle brackets,
         carets, percent signs, etc. For example, if you see '<< Titleist Pro V1 >>', in the JSON objects, you will return the text verbatim as '<< Titleist Pro V1 >>'.
@@ -40,7 +40,7 @@ public class CorePrompts
         {json_list}
 
         Instructions:
-        - The manufacturer should be the correct and must be in the following list: {manufacturers}. If there is no match, or you are not sure, please respond with 'unknown'.
+        - The manufacturer should match one of the manufacturers from the following list: {manufacturers}. If there is no match, or you are not sure, you **must** set the manufacturer as 'unknown'.
         - The color should be the most representative color based on the image and the data.
         - For the markings, ensure you capture any relevant text and symbols exactly as they appear, with their corresponding colors. If there are any conflicting markings, 
           choose the one that best represents the ball's appearance.
@@ -61,16 +61,17 @@ public class CorePrompts
         }}";
 
     public static string GetNlpPrompt(string json) => $@"
-        Convert the following JSON into an Azure AI Search natural language processing (NLP) query. Ensure the output is a concise and in complete sentence suitable for search input.
+        Given the JSON at the bottom, you must extract only the markings field and convert this value into an Azure AI Search natural language processing (NLP) query. Ensure the output is a concise
+        and in a complete sentence suitable for search input.
         
         Instructions:
+        - You must only use the markings field from the JSON; ignore the manufacturer and color fields.
         - You must **not** remove any special characters such as percent symbols ('%'), ampersands ('&'), double angle brackets ('<< >>'), or single angle brackets ('< >') as these are critical to the search.
         - You must add quotes to important phrases or keywords that should be treated as a single entity in the search query. 
           You must add a + sign to the front of the phrase to indicate that it is a required term.
           For example, if the query is ""Find the best restaurants in New York,"" the result should be: +""best"" +""restaurants"" in +""New York""
         - Don't add quotes to phrases or keywords that already have quotes. 
         - Don't add extra words or extra characters to the query including slashes, brackets, or other punctuation unless they are part of the original query.
-        - Do not include 'color' or 'manufacturer' in the query. 
 
         JSON:
         {json}";
