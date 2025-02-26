@@ -65,14 +65,14 @@ public class EquipmentClassificationController : ControllerBase
             var golfBallDetailsList = new List<GolfBallLLMDetail>();
             for (int i = 0; i < 3; i++)
             {
-                var golfBallDetails = await _azureOpenAIService.ExtractImageDetailsAsync(imageUrlList, null);
+                var golfBallDetails = await _azureOpenAIService.ExtractImageDetailsAsync(imageUrlList, null, sessionId);
                 golfBallDetailsList.Add(golfBallDetails);
             }
 
             // get the final golf ball details by using the LLM to evaluate the three results against the images
-            var finalGolfBallDetails = await _azureOpenAIService.ExtractImageDetailsAsync(imageUrlList, golfBallDetailsList);
+            var finalGolfBallDetails = await _azureOpenAIService.ExtractImageDetailsAsync(imageUrlList, golfBallDetailsList, sessionId);
 
-            var queryTuple = await _azureOpenAIService.GenerateNLQueryAsync(finalGolfBallDetails);
+            var queryTuple = await _azureOpenAIService.GenerateNLQueryAsync(finalGolfBallDetails, sessionId);
 
             _logger.LogInformation($"NLP Query: {queryTuple.nlpQuery} Filter: {queryTuple.filter}");
 

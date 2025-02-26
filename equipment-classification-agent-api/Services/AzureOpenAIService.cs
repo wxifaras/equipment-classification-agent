@@ -20,16 +20,15 @@ public interface IAzureOpenAIService
     /// <param name="imageUrlList"></param>
     /// <param name="golfBallLLMDetails"></param>
     /// <returns></returns>
-    Task<GolfBallLLMDetail> ExtractImageDetailsAsync(List<string> imageUrlList, List<GolfBallLLMDetail> golfBallLLMDetails);
+    Task<GolfBallLLMDetail> ExtractImageDetailsAsync(List<string> imageUrlList, List<GolfBallLLMDetail> golfBallLLMDetails, Guid sessionId);
 
-    Task<(string nlpQuery, string filter)> GenerateNLQueryAsync(GolfBallLLMDetail golfBallDetails);
+    Task<(string nlpQuery, string filter)> GenerateNLQueryAsync(GolfBallLLMDetail golfBallDetails, Guid sessionId);
 }
 
 public class AzureOpenAIService : IAzureOpenAIService
 {
     private readonly ILogger<AzureOpenAIService> _logger;
     private readonly AzureOpenAIClient _azureOpenAIClient;
-    private readonly AzureStorageService _azureStorageService;
     private readonly string _deploymentName;
     private readonly ICacheService _cacheService;
     private readonly IChatHistoryService _chatHistoryService;
@@ -37,7 +36,6 @@ public class AzureOpenAIService : IAzureOpenAIService
     public AzureOpenAIService(
         IOptions<AzureOpenAIOptions> options,
         ILogger<AzureOpenAIService> logger,
-        AzureStorageService azureStorageService,
         SearchClient searchClient,
         ICacheService cacheService,
         IChatHistoryService chatHistoryService)
@@ -47,13 +45,12 @@ public class AzureOpenAIService : IAzureOpenAIService
             new AzureKeyCredential(options.Value.AzureOpenAIKey));
 
         _deploymentName = options.Value.AzureOpenAIDeploymentName;
-        _azureStorageService = azureStorageService;
         _logger = logger;
         _cacheService = cacheService;
         _chatHistoryService = chatHistoryService;
     }
 
-    public async Task<GolfBallLLMDetail> ExtractImageDetailsAsync(List<string> imageUrlList, List<GolfBallLLMDetail> golfBallLLMDetails)
+    public async Task<GolfBallLLMDetail> ExtractImageDetailsAsync(List<string> imageUrlList, List<GolfBallLLMDetail> golfBallLLMDetails, Guid sessionId)
     {
         var chatClient = _azureOpenAIClient.GetChatClient(_deploymentName);
 
@@ -114,6 +111,7 @@ public class AzureOpenAIService : IAzureOpenAIService
 
                 var jsonObject = JObject.Parse(jsonResponse);
                 golfBallDetail = jsonObject.ToObject<GolfBallLLMDetail>();
+                await _chatHistoryService.SaveChatHistoryAsync(sessionId, messages, jsonResponse);
             }
             else
             {
@@ -128,7 +126,7 @@ public class AzureOpenAIService : IAzureOpenAIService
         return golfBallDetail;
     }
 
-    public async Task<(string nlpQuery, string filter)> GenerateNLQueryAsync(GolfBallLLMDetail golfBallDetails)
+    public async Task<(string nlpQuery, string filter)> GenerateNLQueryAsync(GolfBallLLMDetail golfBallDetails, Guid sessionId)
     {
         var chatClient = _azureOpenAIClient.GetChatClient(_deploymentName);
 
@@ -164,6 +162,7 @@ public class AzureOpenAIService : IAzureOpenAIService
             }
 
             queryTuple = (nlpQuery, filter);
+            await _chatHistoryService.SaveChatHistoryAsync(sessionId, nlpPrompt, nlpQuery);
         }
         catch (Exception ex)
         {
