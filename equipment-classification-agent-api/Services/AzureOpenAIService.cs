@@ -162,7 +162,7 @@ public class AzureOpenAIService : IAzureOpenAIService
                 if (!manufacturer.Equals("unknown", StringComparison.OrdinalIgnoreCase))
                 {
                     // Escape single quotes by doubling them
-                    var escapedManufacturer = manufacturer.Replace("'", "'");
+                    var escapedManufacturer = manufacturer.Replace("'", "''");
                     filter += $" and manufacturer eq '{escapedManufacturer}'";
                 }
             }
