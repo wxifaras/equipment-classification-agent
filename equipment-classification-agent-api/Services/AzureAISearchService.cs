@@ -16,8 +16,8 @@ public interface IAzureAISearchService
     Task IndexDataAsync();
     Task<List<GolfBallAISearch>> SearchGolfBallAsync(
            string query,
-           int k = 3,
-           int top = 3, // top 3 results
+           int k = 5,
+           int top = 10, // top 10 results
            string? filter = null,
            bool textOnly = false,
            bool hybrid = true,
@@ -117,8 +117,6 @@ public class AzureAISearchService : IAzureAISearchService
                         {
                             ContentFields =
                             {
-                                new SemanticField("manufacturer"),
-                                new SemanticField("colour"),
                                 new SemanticField("pole_marking"),
                                 new SemanticField("seam_marking"),
                                 new SemanticField("pole_2")
@@ -186,9 +184,7 @@ public class AzureAISearchService : IAzureAISearchService
 
             foreach (var golfBall in golfBalls)
             {
-                string textForEmbedding = $"manufacturer: {golfBall.Manufacturer}, " +
-                                          $"pole_marking: {golfBall.Pole_Marking}, " +
-                                          $"colour: {golfBall.Colour}, " +
+                string textForEmbedding = $"pole_marking: {golfBall.Pole_Marking}, " +
                                           $"seam_marking: {golfBall.Seam_Marking}, " +
                                           $"pole_2: {golfBall.Pole_2}";
 
@@ -216,8 +212,8 @@ public class AzureAISearchService : IAzureAISearchService
 
     public async Task<List<GolfBallAISearch>> SearchGolfBallAsync(
            string query,
-           int k = 3,
-           int top = 3, // top 3 results
+           int k = 5,
+           int top = 10, // top 10 results
            string? filter = null,
            bool textOnly = false,
            bool hybrid = true,
@@ -231,7 +227,9 @@ public class AzureAISearchService : IAzureAISearchService
                 Filter = filter,
                 Size = top,
                 Select = { "id", "manufacturer", "pole_marking", "usga_lot_num", "constCode", "ballSpecs", "dimples", "spin", "pole_2", "colour", "seam_marking", "imageUrl" },
-                IncludeTotalCount = true
+                IncludeTotalCount = true,
+                QueryType = SearchQueryType.Semantic,
+                SearchMode = SearchMode.Any
             };
 
             if (!textOnly)
@@ -241,6 +239,7 @@ public class AzureAISearchService : IAzureAISearchService
                     Queries = {
                         new VectorizableTextQuery(text: query)
                         {
+                            Exhaustive = true,
                             KNearestNeighborsCount = k,
                             Fields = { "vectorContent" }
                         }

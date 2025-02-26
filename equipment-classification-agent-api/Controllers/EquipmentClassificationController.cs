@@ -49,7 +49,31 @@ public class EquipmentClassificationController : ControllerBase
                await _azureStorageService.UploadImageAsync(image.OpenReadStream(), image.FileName, sessionId.ToString());
             }
 
-            var queryTuple = await _azureOpenAIService.ExtractImageDetailsAsync(request);
+            // generate SAS URLs that will be sent to the LLM for data extraction
+            string fileName = string.Empty;
+            var imageUrlList = new List<string>();
+            foreach (var image in request.Images)
+            {
+                fileName = $"{request.SessionId}/{image.FileName}";
+                var imageUrl = await _azureStorageService.GenerateSasUriAsync(fileName);
+                imageUrlList.Add(imageUrl);
+            }
+
+            // to ensure that the markings are extracted properly, we are going to have the LLM evaluate this three times,
+            // then we will take the list of json results from each and have another LLM evaluate the three results against
+            // the images to construct a final json extraction result
+            var golfBallDetailsList = new List<GolfBallLLMDetail>();
+            for (int i = 0; i < 3; i++)
+            {
+                var golfBallDetails = await _azureOpenAIService.ExtractImageDetailsAsync(imageUrlList, null);
+                golfBallDetailsList.Add(golfBallDetails);
+            }
+
+            // get the final golf ball details by using the LLM to evaluate the three results against the images
+            var finalGolfBallDetails = await _azureOpenAIService.ExtractImageDetailsAsync(imageUrlList, golfBallDetailsList);
+
+            var queryTuple = await _azureOpenAIService.GenerateNLQueryAsync(finalGolfBallDetails);
+
             _logger.LogInformation($"NLP Query: {queryTuple.nlpQuery} Filter: {queryTuple.filter}");
 
             var response = new EquipmentClassificationResponse();
