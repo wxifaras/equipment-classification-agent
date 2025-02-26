@@ -41,21 +41,12 @@ public class EquipmentClassificationController : ControllerBase
                 return BadRequest("No file uploaded.");
             }
 
-            var sessionId = string.Empty;
-
-            if (string.IsNullOrEmpty(request.SessionId))
-            {
-                sessionId = Guid.NewGuid().ToString();
-            }
-            else
-            {
-                sessionId = request.SessionId;
-            }
+            Guid sessionId = request.SessionId == Guid.Empty ? Guid.NewGuid() : request.SessionId;
 
             foreach (var image in request.Images)
             {
                _logger.LogInformation($"Uploading image. {image.FileName}");
-               await _azureStorageService.UploadImageAsync(image.OpenReadStream(), image.FileName, sessionId);
+               await _azureStorageService.UploadImageAsync(image.OpenReadStream(), image.FileName, sessionId.ToString());
             }
 
             // generate SAS URLs that will be sent to the LLM for data extraction

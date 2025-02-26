@@ -59,6 +59,7 @@ builder.Services.AddSingleton<IAzureSQLService>(sp =>
     var logger = sp.GetRequiredService<ILogger<AzureSQLService>>();
     return new AzureSQLService(azureSQLOptions, logger);
 });
+
 builder.Services.AddSingleton(sp =>
 {
     var azureAISearchOptions = sp.GetRequiredService<IOptions<AzureAISearchOptions>>();
@@ -112,6 +113,13 @@ builder.Services.AddSingleton<ICacheService>(sp =>
     return new CacheService(memoryCache, logger, azureSqlService);
 });
 
+builder.Services.AddSingleton<IChatHistoryService>(sp =>
+{
+    var azureSqlService = sp.GetRequiredService<IAzureSQLService>();
+    var logger = sp.GetRequiredService<ILogger<ChatHistoryService>>();
+    return new ChatHistoryService(azureSqlService, logger);
+});
+
 builder.Services.AddSingleton<IAzureOpenAIService>(sp =>
 {
     var azureOpenAIOptions = sp.GetRequiredService<IOptions<AzureOpenAIOptions>>();
@@ -119,10 +127,10 @@ builder.Services.AddSingleton<IAzureOpenAIService>(sp =>
     var azureStorageService = sp.GetRequiredService<AzureStorageService>();
     var searchClient = sp.GetRequiredService<SearchClient>();
     var cacheService = sp.GetRequiredService<ICacheService>();
+    var chatHistoryService = sp.GetRequiredService<IChatHistoryService>();
 
-    return new AzureOpenAIService(azureOpenAIOptions, logger, azureStorageService, searchClient, cacheService);
+    return new AzureOpenAIService(azureOpenAIOptions, logger, azureStorageService, searchClient, cacheService, chatHistoryService);
 });
-
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

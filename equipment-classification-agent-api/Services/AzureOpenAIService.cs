@@ -1,4 +1,4 @@
-﻿using Azure.AI.OpenAI;
+using Azure.AI.OpenAI;
 using Azure;
 using equipment_classification_agent_api.Models;
 using Microsoft.Extensions.Options;
@@ -32,13 +32,15 @@ public class AzureOpenAIService : IAzureOpenAIService
     private readonly AzureStorageService _azureStorageService;
     private readonly string _deploymentName;
     private readonly ICacheService _cacheService;
+    private readonly IChatHistoryService _chatHistoryService;
 
     public AzureOpenAIService(
         IOptions<AzureOpenAIOptions> options,
         ILogger<AzureOpenAIService> logger,
         AzureStorageService azureStorageService,
         SearchClient searchClient,
-        ICacheService cacheService)
+        ICacheService cacheService,
+        IChatHistoryService chatHistoryService)
     {
         _azureOpenAIClient = new(
             new Uri(options.Value.AzureOpenAIEndPoint),
@@ -48,82 +50,83 @@ public class AzureOpenAIService : IAzureOpenAIService
         _azureStorageService = azureStorageService;
         _logger = logger;
         _cacheService = cacheService;
+        _chatHistoryService = chatHistoryService;
     }
 
     public async Task<GolfBallLLMDetail> ExtractImageDetailsAsync(List<string> imageUrlList, List<GolfBallLLMDetail> golfBallLLMDetails)
     {
-        var chatClient = _azureOpenAIClient.GetChatClient(_deploymentName);
+      var chatClient = _azureOpenAIClient.GetChatClient(_deploymentName);
 
-        var manufacturers = await _cacheService.GetManufacturers();
+    var manufacturers = await _cacheService.GetManufacturers();
 
-        var commaSeparatedManufacturers = string.Join(", ", manufacturers);
+    var commaSeparatedManufacturers = string.Join(", ", manufacturers);
 
-        var systemPrompt = string.Empty;
+    var systemPrompt = string.Empty;
 
-        // Get the system prompt
-        if (golfBallLLMDetails == null)
+    // Get the system prompt
+    if (golfBallLLMDetails == null)
+    {
+        systemPrompt = CorePrompts.GetImageMarkingsExtractionsPrompt(commaSeparatedManufacturers);
+    }
+    else
+    {
+        var golfBallLLMDetailsJson = JsonSerializer.Serialize(golfBallLLMDetails, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        systemPrompt = CorePrompts.GetFinalImageMarkingsExtractionsPrompt(commaSeparatedManufacturers, golfBallLLMDetailsJson);
+    }
+
+    ChatImageDetailLevel? imageDetailLevel = ChatImageDetailLevel.High;
+    var messages = new List<ChatMessage>
+    {
+        new SystemChatMessage(systemPrompt),
+        new UserChatMessage(
+        new List<ChatMessageContentPart>
         {
-            systemPrompt = CorePrompts.GetImageMarkingsExtractionsPrompt(commaSeparatedManufacturers);
+            ChatMessageContentPart.CreateTextPart("Analyze these images:"),
+        }.Concat(imageUrlList.Select(url => ChatMessageContentPart.CreateImagePart(new Uri(url), imageDetailLevel))).ToList())
+    };
+
+    var generator = new JSchemaGenerator();
+    var jsonSchema = generator.Generate(typeof(GolfBallLLMDetail)).ToString();
+
+    //Create chat completion options
+    var options = new ChatCompletionOptions
+    {
+        Temperature = (float)0.7,
+        MaxOutputTokenCount = 800,
+        FrequencyPenalty = 0,
+        PresencePenalty = 0,
+        ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat("GolfBallDetail", BinaryData.FromString(jsonSchema))
+    };
+
+    // Create the chat completion request
+    ChatCompletion completion = await chatClient.CompleteChatAsync(messages, options);
+
+    var golfBallDetail = new GolfBallLLMDetail();
+    var jsonResponse = string.Empty;
+
+    try
+    {
+        // Print the response
+        if (completion.Content != null && completion.Content.Count > 0)
+        {
+            _logger.LogInformation($"Result: {completion.Content[0].Text}");
+            jsonResponse = $"{completion.Content[0].Text}";
+
+            var jsonObject = JObject.Parse(jsonResponse);
+            golfBallDetail = jsonObject.ToObject<GolfBallLLMDetail>();
         }
         else
         {
-            var golfBallLLMDetailsJson = JsonSerializer.Serialize(golfBallLLMDetails, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            systemPrompt = CorePrompts.GetFinalImageMarkingsExtractionsPrompt(commaSeparatedManufacturers, golfBallLLMDetailsJson);
+            _logger.LogInformation("No response received.");
         }
-
-        ChatImageDetailLevel? imageDetailLevel = ChatImageDetailLevel.High;
-        var messages = new List<ChatMessage>
-        {
-            new SystemChatMessage(systemPrompt),
-            new UserChatMessage(
-            new List<ChatMessageContentPart>
-            {
-                ChatMessageContentPart.CreateTextPart("Analyze these images:"),
-            }.Concat(imageUrlList.Select(url => ChatMessageContentPart.CreateImagePart(new Uri(url), imageDetailLevel))).ToList())
-        };
-
-        var generator = new JSchemaGenerator();
-        var jsonSchema = generator.Generate(typeof(GolfBallLLMDetail)).ToString();
-
-        //Create chat completion options
-        var options = new ChatCompletionOptions
-        {
-            Temperature = (float)0.7,
-            MaxOutputTokenCount = 800,
-            FrequencyPenalty = 0,
-            PresencePenalty = 0,
-            ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat("GolfBallDetail", BinaryData.FromString(jsonSchema))
-        };
-
-        // Create the chat completion request
-        ChatCompletion completion = await chatClient.CompleteChatAsync(messages, options);
-
-        var golfBallDetail = new GolfBallLLMDetail();
-        var jsonResponse = string.Empty;
-
-        try
-        {
-            // Print the response
-            if (completion.Content != null && completion.Content.Count > 0)
-            {
-                _logger.LogInformation($"Result: {completion.Content[0].Text}");
-                jsonResponse = $"{completion.Content[0].Text}";
-
-                var jsonObject = JObject.Parse(jsonResponse);
-                golfBallDetail = jsonObject.ToObject<GolfBallLLMDetail>();
-            }
-            else
-            {
-                _logger.LogInformation("No response received.");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInformation($"An error occurred: {ex.Message}");
-        }
-
-        return golfBallDetail;
     }
+    catch (Exception ex)
+    {
+        _logger.LogInformation($"An error occurred: {ex.Message}");
+    }
+
+    return golfBallDetail;                  
+}
 
     public async Task<(string nlpQuery, string filter)> GenerateNLQueryAsync(GolfBallLLMDetail golfBallDetails)
     {
