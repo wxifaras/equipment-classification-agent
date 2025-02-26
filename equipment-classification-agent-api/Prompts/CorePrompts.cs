@@ -3,25 +3,30 @@
 public class CorePrompts
 {
     public static string GetImageMarkingsExtractionsPrompt(string manufacturers) => $@"
-        Your task is to analyze one or more pictures of a golf ball and extract details from the images. Ensure that all text, markings, 
-        and symbols (such as arrows, angle brackets, lines, or other characters) along with their colors, are included **exactly as they appear** if
+        Your task is to analyze one or more pictures of a golf ball and extract details from the images. Ensure that **all text, markings, 
+        and symbols** (such as arrows, angle brackets, lines, or other characters) along with their colors, **are included exactly as they appear** if
         they can be represented by a character. Do **not** rephrase or describe any symbols, including angle brackets, carets, percent signs, etc.
-        If you see a an angle bracket ('>'), percent symbol ('%') or an ampersand ('&'), return them as '>' '%', '&', etc. Do **not** describe these symbols
+        If you encounter a symbol such as an angle bracket ('>'), percent symbol ('%'), ampersand ('&'), or any other character enclosing a word (e.g., < word >, | word |, - word -),
+        **return these symbols exactly as they appear**. For example, if you see the text '< something >' or '| something |', you must return it as '< something >' and '| something |',
+        without describing them as \""angle brackets around the word something\"" or \""pipes surrounding the word something\"". Do **not** describe these symbols
         as words (e.g., 'angle bracket', 'percent' or 'ampersand'). It is also critical that you capture the color of any symbol. For example, if you see
-        a red arrow underneath the text 'Titleist Pro V1', you will return 'Titleist Pro V1 with a red arrow underneath'.
+        a red arrow underneath the text 'Titleist Pro V1', you will return 'Titleist Pro V1 with a red arrow underneath'. Finally, you **must** ignore any markings that you cannot 100% identify.
+        For example, if markings are partially obscured or run off of the ball, don't make any assumptions about what they are. Pay special attention to the edge of the ball where markings may run off.
         
-        Instructions:
-        1. Manufacturer: Identify the name of the golf ball manufacturer. Store your findings in the 'manufacturer' property of the JSON structure below.
+        ### Instructions:
+        1. **Manufacturer**: Identify the name of the golf ball manufacturer. Store your findings in the 'manufacturer' property of the JSON structure below.
             You must be sure to only use the manufacturers from the following list: {manufacturers}
 
             If the markings you extract do not match one of the manufacturers from the list or you are not sure, please respond with 'unknown' for the manufacturer.
-        2. Color: Identify the color of the ball. Store the color in the 'color' property of the JSON structure below.
-        3. Markings: Identify any text or a combination of text and symbols on a picture. If there are symbols near or around text, capture the type of symbol along with its color. You
-           **must not** project any markings if you cannot clearly identify what they are. For example, if markings are partially obscured or run off of the ball, don't make any assumptions about what they are.
-           Store your findings in the 'markings' property of the JSON structure below. Remember to include the symbols exactly as they appear if they can be represented with characters, 
-           without describing them.
 
-        JSON Raw Response:
+        2. **Color**: Identify the color of the ball. Store the color in the 'color' property of the JSON structure below.
+
+        3. **Markings**: Identify any text or a combination of text and symbols on the picture. If there are symbols near or around text, capture the **exact symbol** along with its color and the letters
+           it surrounds. For example, '< something >' should be returned as '< something >'. You **must** ignore any markings that you cannot 100% identify. For example, if markings are
+           partially obscured or run off of the ball, don't make any assumptions about what they are. Pay special attention to the edge of the ball where markings may run off.
+           Store your findings in the 'markings' property of the JSON structure below. Remember to include the symbols exactly as they appear, without describing them.
+
+        ### JSON Raw Response:
         {{     
             \""manufacturer\"": \""some manufacturer\"",
             \""color\"": \""yellow\"",
