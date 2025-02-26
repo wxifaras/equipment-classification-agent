@@ -23,4 +23,7 @@ public class AzureOpenAIOptions
 
     [Required]
     public string AzureOpenAIEmbeddingDimensions { get; set; }
+
+    [Required]
+    public bool EnableChatHistory { get; set; }
 }

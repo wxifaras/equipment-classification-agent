@@ -32,6 +32,7 @@ public class AzureOpenAIService : IAzureOpenAIService
     private readonly string _deploymentName;
     private readonly ICacheService _cacheService;
     private readonly IChatHistoryService _chatHistoryService;
+    private readonly bool _enableChatHistory;
 
     public AzureOpenAIService(
         IOptions<AzureOpenAIOptions> options,
@@ -48,6 +49,7 @@ public class AzureOpenAIService : IAzureOpenAIService
         _logger = logger;
         _cacheService = cacheService;
         _chatHistoryService = chatHistoryService;
+        _enableChatHistory = options.Value.EnableChatHistory;
     }
 
     public async Task<GolfBallLLMDetail> ExtractImageDetailsAsync(List<string> imageUrlList, List<GolfBallLLMDetail> golfBallLLMDetails, Guid sessionId)
@@ -111,7 +113,11 @@ public class AzureOpenAIService : IAzureOpenAIService
 
                 var jsonObject = JObject.Parse(jsonResponse);
                 golfBallDetail = jsonObject.ToObject<GolfBallLLMDetail>();
-                await _chatHistoryService.SaveChatHistoryAsync(sessionId, messages, jsonResponse);
+
+                if (_enableChatHistory)
+                {
+                    await _chatHistoryService.SaveChatHistoryAsync(sessionId, messages, jsonResponse);
+                }
             }
             else
             {
@@ -162,7 +168,10 @@ public class AzureOpenAIService : IAzureOpenAIService
             }
 
             queryTuple = (nlpQuery, filter);
-            await _chatHistoryService.SaveChatHistoryAsync(sessionId, nlpPrompt, nlpQuery);
+            if (_enableChatHistory)
+            {
+                await _chatHistoryService.SaveChatHistoryAsync(sessionId, nlpPrompt, nlpQuery);
+            }
         }
         catch (Exception ex)
         {
