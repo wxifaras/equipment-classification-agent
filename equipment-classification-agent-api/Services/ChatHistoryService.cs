@@ -1,5 +1,4 @@
-﻿using equipment_classification_agent_api.Models;
-using OpenAI.Chat;
+﻿using OpenAI.Chat;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
@@ -26,8 +25,8 @@ public enum ChatRole
 
 public interface IChatHistoryService
 {
-    Task SaveChatHistoryAsync(EquipmentClassificationRequest request, List<OpenAI.Chat.ChatMessage> messages, string jsonResponse);
-    Task SaveChatHistoryAsync(EquipmentClassificationRequest request, string nlpPrompt, string nlpQuery);
+    Task SaveChatHistoryAsync(Guid sessionId, List<OpenAI.Chat.ChatMessage> messages, string jsonResponse);
+    Task SaveChatHistoryAsync(Guid sessionId, string nlpPrompt, string nlpQuery);
 }
 
 public class ChatHistoryService : IChatHistoryService
@@ -43,16 +42,16 @@ public class ChatHistoryService : IChatHistoryService
         _logger = logger;
     }
 
-    public async Task SaveChatHistoryAsync(EquipmentClassificationRequest request, List<OpenAI.Chat.ChatMessage> messages, string jsonResponse)
+    public async Task SaveChatHistoryAsync(Guid sessionId, List<OpenAI.Chat.ChatMessage> messages, string jsonResponse)
     {
-        await CreateChatSessionAsync(request.SessionId, DateTime.UtcNow);
+        await CreateChatSessionAsync(sessionId, DateTime.UtcNow);
         foreach (var message in messages)
         {
             var role = string.Empty;
             if (message is OpenAI.Chat.SystemChatMessage)
             {
                 role = ChatRole.System.ToString();
-                await CreateChatMessageAsync(request.SessionId, role, message.Content[0].Text);
+                await CreateChatMessageAsync(sessionId, role, message.Content[0].Text);
             }
 
             if (message is OpenAI.Chat.UserChatMessage)
@@ -63,24 +62,24 @@ public class ChatHistoryService : IChatHistoryService
                 {
                     if (content.Kind == ChatMessageContentPartKind.Text)
                     {
-                        await CreateChatMessageAsync(request.SessionId, role, content.Text, DateTime.UtcNow);
+                        await CreateChatMessageAsync(sessionId, role, content.Text, DateTime.UtcNow);
                     }
 
                     if (content.Kind == ChatMessageContentPartKind.Image)
                     {
-                        await CreateChatMessageAsync(request.SessionId, role, content.ImageUri.ToString(), DateTime.UtcNow);
+                        await CreateChatMessageAsync(sessionId, role, content.ImageUri.ToString(), DateTime.UtcNow);
                     }
                 }
             }
         }
 
-        await CreateChatMessageAsync(request.SessionId, ChatRole.Assistant.ToString(), jsonResponse, DateTime.UtcNow);
+        await CreateChatMessageAsync(sessionId, ChatRole.Assistant.ToString(), jsonResponse, DateTime.UtcNow);
     }
 
-    public async Task SaveChatHistoryAsync(EquipmentClassificationRequest request, string nlpPrompt, string nlpQuery)
+    public async Task SaveChatHistoryAsync(Guid sessionId, string nlpPrompt, string nlpQuery)
     {
-        await CreateChatMessageAsync(request.SessionId, ChatRole.System.ToString(), nlpPrompt, DateTime.UtcNow);
-        await CreateChatMessageAsync(request.SessionId, ChatRole.Assistant.ToString(), nlpQuery, DateTime.UtcNow);
+        await CreateChatMessageAsync(sessionId, ChatRole.System.ToString(), nlpPrompt, DateTime.UtcNow);
+        await CreateChatMessageAsync(sessionId, ChatRole.Assistant.ToString(), nlpQuery, DateTime.UtcNow);
     }
 
     private async Task CreateChatSessionAsync(Guid sessionId, DateTime createdAt)

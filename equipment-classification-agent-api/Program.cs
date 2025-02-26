@@ -129,7 +129,7 @@ builder.Services.AddSingleton<IAzureOpenAIService>(sp =>
     var cacheService = sp.GetRequiredService<ICacheService>();
     var chatHistoryService = sp.GetRequiredService<IChatHistoryService>();
 
-    return new AzureOpenAIService(azureOpenAIOptions, logger, azureStorageService, searchClient, cacheService, chatHistoryService);
+    return new AzureOpenAIService(azureOpenAIOptions, logger, searchClient, cacheService, chatHistoryService);
 });
 
 builder.Services.AddEndpointsApiExplorer();
