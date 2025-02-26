@@ -15,7 +15,7 @@ public class CorePrompts
         
         ### Instructions:
         1. **Manufacturer**: Identify the name of the golf ball manufacturer. Store your findings in the 'manufacturer' property of the JSON structure below.
-            You must be sure to only use the manufacturers from the following list: {manufacturers}
+            You must only use the manufacturers from the following list: {manufacturers}
 
             If the markings you extract do not match one of the manufacturers from the list or you are not sure, please respond with 'unknown' for the manufacturer.
 
