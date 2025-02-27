@@ -113,4 +113,3 @@ public class CorePrompts
         JSON:
         {json}";
 }
-
