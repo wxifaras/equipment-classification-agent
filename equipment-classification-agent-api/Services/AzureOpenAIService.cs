@@ -91,7 +91,7 @@ public class AzureOpenAIService : IAzureOpenAIService
         //Create chat completion options
         var options = new ChatCompletionOptions
         {
-            Temperature = 0,
+            Temperature = (float)0.7,
             MaxOutputTokenCount = 800,
             FrequencyPenalty = 0,
             PresencePenalty = 0,
@@ -144,7 +144,7 @@ public class AzureOpenAIService : IAzureOpenAIService
             string golfBallDetailsJson = JsonSerializer.Serialize(golfBallDetails, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             var options = new ChatCompletionOptions
             {
-                Temperature = 0,
+                Temperature = (float)0.7,
                 MaxOutputTokenCount = 800,
                 FrequencyPenalty = 0,
                 PresencePenalty = 0
