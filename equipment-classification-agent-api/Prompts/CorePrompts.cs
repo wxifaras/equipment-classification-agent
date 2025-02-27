@@ -61,13 +61,11 @@ public class CorePrompts
         - The JSON response contains only extracted data exactly as found in the image, without alterations or inferred details. Do not add words, reword, or structure data beyond its original form.
         - Ensure each property is represented in natural language, which will be used for Azure AI Search. Do *not* use fragmented sentences or phrases. 
 
-
         Here are the JSON objects from the extraction process:
 
         {json_list}
 
-        The JSON response should be structured as follows:
-        
+        ### JSON Response Format:
         JSON Raw Response:
         {{
             \""manufacturer\"": \""some manufacturer\"",
