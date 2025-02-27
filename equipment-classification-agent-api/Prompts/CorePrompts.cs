@@ -6,18 +6,20 @@ public class CorePrompts
         Your task is to analyze one or more pictures of a golf ball and extract details from the images. Ensure that **all text, markings, 
         and symbols** (such as arrows, angle brackets, lines, or other characters) along with their colors, **are included exactly as they appear** if
         they can be represented by a character. Do **not** rephrase or describe any symbols, including angle brackets, carets, percent signs, etc.
-        If you encounter a symbol such as an angle bracket ('>'), percent symbol ('%'), ampersand ('&'), or any other character enclosing a word (e.g., < word >, | word |, - word -),
-        **return these symbols exactly as they appear**. For example, if you see the text '< something >' or '| something |', you must return it as '< something >' and '| something |',
+        If you encounter a symbol like this angle bracket ('>') or this angle bracket ('<'), percent symbol ('%'), ampersand ('&'), 
+        or any other character enclosing a word (e.g., < word >, | word |, - word -), **return these symbols exactly as they appear**. 
+        If you see the text '< something >' or '| something |', you must return it as '< something >' and '| something |',
         without describing them as \""angle brackets around the word something\"" or \""pipes surrounding the word something\"". Do **not** describe these symbols
         as words (e.g., 'angle bracket', 'percent' or 'ampersand'). It is also critical that you capture the color of any symbol. For example, if you see
-        a red arrow underneath the text 'Titleist Pro V1', you will return 'Titleist Pro V1 with a red arrow underneath'. Finally, you **must** ignore any markings that you cannot 100% identify.
-        For example, if markings are partially obscured or run off of the ball, don't make any assumptions about what they are. Pay special attention to the edge of the ball where markings may run off.
-        
+        a red arrow underneath the text 'Titleist Pro V1', you will return 'Titleist Pro V1 with a red arrow underneath'. 
+        If markings are partially obscured or run off of the ball, do not make any assumptions about what they are.         
+        You **must** ignore any markings that you cannot 100% identify. Do not add words, reword, or structure data beyond its original form.
+                
         ### Instructions:
         1. **Manufacturer**: Identify the name of the golf ball manufacturer. Store your findings in the 'manufacturer' property of the JSON structure below.
-            You must only use the manufacturers from the following list: {manufacturers}
+            Only use the manufacturers from the following list: {manufacturers}
 
-            If the markings you extract do not match one of the manufacturers from the list or you are not sure, please respond with 'unknown' for the manufacturer.
+            If the markings you extract do not exactly match one of the manufacturers, respond with 'unknown' for the manufacturer.
 
         2. **Color**: Identify the color of the ball. Store the color in the 'color' property of the JSON structure below.
 
@@ -34,11 +36,11 @@ public class CorePrompts
         }}";
 
     public static string GetFinalImageMarkingsExtractionsPrompt(string manufacturers, string json_list) => $@"
-        You have received multiple JSON objects representing different color, manufacturer, markings, details, and information extracted from images of a golf ball. Your task is
-        to analyze and consolidate all the information into a single JSON object that best represents the golf ball's features from the images provided. Please
-        carefully combine the data, remove any duplicates, and provide the most relevant details. Do **not** rephrase or describe any symbols, including angle brackets,
-        carets, percent signs, etc. If you see a an angle bracket ('>'), percent symbol ('%') or an ampersand ('&'), return them as '>' '%', '&', etc. Do **not** describe these symbols
-        as words (e.g., 'angle bracket', 'percent' or 'ampersand').
+        You have received multiple JSON objects representing different color, manufacturer, markings, details, and information extracted from images of a golf ball. 
+        Your task is to analyze and consolidate all the information into a single JSON object that best represents the golf ball's features from the images provided. 
+        Carefully combine the data, remove any duplicates, and provide the most relevant details. Do **not** rephrase or describe any symbols, including angle brackets,
+        carets, percent signs, etc. If you see a an angle bracket ('>') or this angle bracket ('<'), percent symbol ('%') or an ampersand ('&'), return them as '>' '<' '%', '&', etc.
+        Do **not** describe these symbols as words (e.g., 'angle bracket', 'percent' or 'ampersand').
 
         Here are the JSON objects from the extraction process:
 
@@ -47,17 +49,18 @@ public class CorePrompts
         Instructions:
         - The manufacturer should match one of the manufacturers from the following list: {manufacturers}. If there is no match, or you are not sure, you **must** set the manufacturer as 'unknown'.
         - The color should be the most representative color based on the image and the data.
-        - For the markings, ensure you capture any relevant text and symbols exactly as they appear, with their corresponding colors. If there are any conflicting markings, 
-          choose the one that best represents the ball's appearance.
-        - In case of duplicate markings, consolidate or choose the most accurate version.
+        - For the markings, ensure you capture any relevant text and symbols exactly as they appear, with their corresponding colors. If there are any conflicting markings, choose the one that best represents the ball's appearance.
+        - In the case of duplicate markings, consolidate or choose the most accurate version.
         
         Based on the provided JSON objects and what you see in the images, please return a consolidated JSON response that best represents the image and provides the most accurate and detailed information about the golf ball, including:
         - The manufacturer of the golf ball.
         - The color of the ball.
         - The markings on the ball.
+        - The JSON response contains only extracted data exactly as found in the image, without alterations or inferred details. Do not add words, reword, or structure data beyond its original form.
+        - Ensure each property is represented in natural language, which will be used for Azure AI Search. Do *not* use fragmented sentences or phrases. 
 
-        Ensure each property is represented in natural language, which will be used for Azure AI Search. Do *not* use fragmented sentences or phrases. The JSON response should be structured as follows:
-
+        The JSON response should be structured as follows:
+        
         JSON Raw Response:
         {{
             \""manufacturer\"": \""some manufacturer\"",
