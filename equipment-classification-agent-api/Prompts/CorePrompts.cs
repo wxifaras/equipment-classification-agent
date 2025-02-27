@@ -28,6 +28,11 @@ public class CorePrompts
            - Capture special characters without rewording or describing them.
            - Maintain** original order and spacing**.  
            - Store the result in the 'markings' field.
+        
+        4. **Thought Process**: 
+           - Provide a brief explanation of your thought process in the 'thought_process' field. 
+           - And how you are determining manufacturer, colour, and markings.
+           - Provide any additional context that may help the next analyst understand your reasoning.
 
         ### JSON Response Format:
         JSON Raw Response:
@@ -35,6 +40,7 @@ public class CorePrompts
             \""manufacturer\"": \""some manufacturer\"",
             \""color\"": \""some color\"",
             \""markings\"": \""some markings\""
+            \""thought_process\"": \""explanation of thought process\""
         }}";
 
     public static string GetFinalImageMarkingsExtractionsPrompt(string manufacturers, string json_list) => $@"
@@ -48,18 +54,23 @@ public class CorePrompts
         - If markings conflict across images, select the **most accurate** version.
         - Preserve **original text and symbols exactly** without paraphrasing.
     
-     Instructions:
+        ### Instructions:
         - The **manufacturer** must match one of the manufacturers from the following list: {manufacturers}. If there is no match, or you are not sure, you **must** set the manufacturer as 'unknown'.
         - The color should be the most representative color based on the image and the data.
         - For the markings, ensure you capture any relevant text and symbols exactly as they appear, with their corresponding colors. If there are any conflicting markings, choose the one that best represents the ball's appearance.
         - In the case of duplicate markings, consolidate or choose the most accurate version.
         
-        Based on the provided JSON objects and what you see in the images, please return a consolidated JSON response that best represents the image and provides the most accurate and detailed information about the golf ball, including:
+        ### Based on the provided JSON objects and what you see in the images, please return a consolidated JSON response that best represents the image and provides the most accurate and detailed information about the golf ball, including:
         - The manufacturer of the golf ball.
         - The color of the ball.
         - The markings on the ball.
         - The JSON response contains only extracted data exactly as found in the image, without alterations or inferred details. Do not add words, reword, or structure data beyond its original form.
         - Ensure each property is represented in natural language, which will be used for Azure AI Search. Do *not* use fragmented sentences or phrases. 
+
+        ### Thought Process: 
+        - Provide a brief explanation of your thought process in the 'thought_process' field. 
+        - And how you are determining manufacturer, colour, and markings.
+        - Provide any additional context that may help the next analyst understand your reasoning.
 
         Here are the JSON objects from the extraction process:
 
@@ -70,14 +81,15 @@ public class CorePrompts
         {{
             \""manufacturer\"": \""some manufacturer\"",
             \""color\"": \""some color\"",
-            \""markings\"": \""some markings\""
+            \""markings\"": \""some markings\"",
+            \""thought_process\"": \""explanation of thought process\""
         }}";
 
     public static string GetNlpPrompt(string json) => $@"
         Given the JSON at the bottom, you must extract  the **markings** field and convert this value into an **Azure AI Search natural language processing (NLP) query**. Ensure the output is a concise
         and in a complete sentence suitable for search input.
         
-        Instructions:
+        ### Instructions:
         - You must **only use** the markings field from the JSON; ignore the manufacturer and color fields.
         - **Do not remove** any special characters such as percent symbols ('%'), ampersands ('&'), double angle brackets ('<< >>'), or single angle brackets ('< >') as these are critical to the search.
         - **Do not modify the original wording, symbols, or spacing**.
