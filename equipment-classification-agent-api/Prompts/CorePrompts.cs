@@ -11,12 +11,13 @@ public class CorePrompts
         - **Do not rephrase, assume, infer, or add characters that do not appear in the image.**
         - If symbols enclose a word (e.g., `< word >`, `| word |`), return them exactly as they appear.
         - **Never describe symbols as words** (e.g., do not say `angle bracket around something` or `pipes surrounding something`).
-        - If markings are** partially obscured** or **run off the ball**, ignore them rather than making assumptions.
-        - Maintain** consistent results** across multiple evaluations.
+        - If markings are **partially obscured** or **run off the ball**, ignore them rather than making assumptions.
+        - Maintain **consistent results** across multiple evaluations.
         
         ### Instructions:
         1. **Manufacturer**: Identify the golf ball manufacturer.
-           - The manufacturer **must** match one of the following: {manufacturers}.  
+           - The manufacturer **must** match one of the following: {manufacturers}.
+           - You **must not infer the manufacturer** from information extracted from the images.
            - If no match is found, **return 'unknown'**.
            - Store the result in the 'manufacturer' field of the JSON.
 
