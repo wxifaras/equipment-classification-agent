@@ -7,19 +7,19 @@ public class CorePrompts
         and symbols** (such as arrows, angle brackets, lines, or other characters) along with their colors, **are included exactly as they appear** if
         they can be represented by a character. Do **not** rephrase or describe any symbols, including angle brackets, carets, percent signs, etc.
         If you encounter a symbol like this angle bracket ('>') or this angle bracket ('<'), percent symbol ('%'), ampersand ('&'), 
-        or any other character enclosing a word (e.g., < word >, | word |, - word -), **return these symbols exactly as they appear**. 
+        or any other character enclosing a word (e.g., < word >, | word |, - word -), **return these symbols exactly as they appear**, **you must not add characters or symbols that do not appear in the images**.
         If you see the text '< something >' or '| something |', you must return it as '< something >' and '| something |',
         without describing them as \""angle brackets around the word something\"" or \""pipes surrounding the word something\"". Do **not** describe these symbols
         as words (e.g., 'angle bracket', 'percent' or 'ampersand'). It is also critical that you capture the color of any symbol. For example, if you see
         a red arrow underneath the text 'Titleist Pro V1', you will return 'Titleist Pro V1 with a red arrow underneath'. 
         If markings are partially obscured or run off of the ball, do not make any assumptions about what they are.         
-        You **must** ignore any markings that you cannot 100% identify. Do not add words, reword, or structure data beyond its original form.
+        You **must** ignore any markings that you cannot 100% identify. Do not change order of the markings or text. Do not remove spaces.
                 
         ### Instructions:
-        1. **Manufacturer**: Identify the name of the golf ball manufacturer. Store your findings in the 'manufacturer' property of the JSON structure below.
-            Only use the manufacturers from the following list: {manufacturers}
-
-            If the markings you extract do not exactly match one of the manufacturers, respond with 'unknown' for the manufacturer.
+        1. **Manufacturer**: Identify the name of the golf ball manufacturer. 
+            The manufacturer **must** match one of the manufacturers from the following list: {manufacturers}. 
+            If there is no match, or you are not sure, you **must** set the manufacturer as 'unknown'.
+            Store your findings in the 'manufacturer' property of the JSON structure below.
 
         2. **Color**: Identify the color of the ball. Store the color in the 'color' property of the JSON structure below.
 
@@ -40,14 +40,14 @@ public class CorePrompts
         Your task is to analyze and consolidate all the information into a single JSON object that best represents the golf ball's features from the images provided. 
         Carefully combine the data, remove any duplicates, and provide the most relevant details. Do **not** rephrase or describe any symbols, including angle brackets,
         carets, percent signs, etc. If you see a an angle bracket ('>') or this angle bracket ('<'), percent symbol ('%') or an ampersand ('&'), return them as '>' '<' '%', '&', etc.
-        Do **not** describe these symbols as words (e.g., 'angle bracket', 'percent' or 'ampersand').
+        Do **not** describe these symbols as words (e.g., 'angle bracket', 'percent' or 'ampersand'). Do not change order of the markings or text. Do not remove spaces.
 
         Here are the JSON objects from the extraction process:
 
         {json_list}
 
         Instructions:
-        - The manufacturer should match one of the manufacturers from the following list: {manufacturers}. If there is no match, or you are not sure, you **must** set the manufacturer as 'unknown'.
+        - The manufacturer **must** match one of the manufacturers from the following list: {manufacturers}. If there is no match, or you are not sure, you **must** set the manufacturer as 'unknown'.
         - The color should be the most representative color based on the image and the data.
         - For the markings, ensure you capture any relevant text and symbols exactly as they appear, with their corresponding colors. If there are any conflicting markings, choose the one that best represents the ball's appearance.
         - In the case of duplicate markings, consolidate or choose the most accurate version.

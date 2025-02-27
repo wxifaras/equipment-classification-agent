@@ -92,6 +92,8 @@ public class EquipmentClassificationController : ControllerBase
         // get the final golf ball details by using the LLM to evaluate the three results against the images
         var finalGolfBallDetails = await _azureOpenAIService.ExtractImageDetailsAsync(imageUrlList, golfBallDetailsList, sessionId);
 
+        _logger.LogInformation($"Final Golf Ball Details: {finalGolfBallDetails}");
+
         var queryTuple = await _azureOpenAIService.GenerateNLQueryAsync(finalGolfBallDetails, sessionId);
 
         _logger.LogInformation($"NLP Query: {queryTuple.nlpQuery} Filter: {queryTuple.filter}");
