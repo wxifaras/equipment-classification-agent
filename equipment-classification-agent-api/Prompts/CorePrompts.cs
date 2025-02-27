@@ -29,6 +29,17 @@ public class CorePrompts
            - Maintain** original order and spacing**.  
            - Store the result in the 'markings' field.
 
+         Here are examples of how some of how marking data is worded in the database:
+            - Tour 900 in white in black line
+            - (long arrow) Tour (long arrow)
+            - (arrow) U3 (arrow) with line above and below
+            - (arrow) Tour B X (arrow) with (arrows) in black/yellow
+            - Alignment lines in various colors
+            - Staff Model B in white in split black line
+            - < Super Soft in white in black bar >
+
+        Try to use these examples as a refrence to format your markings response
+
         ### JSON Response Format:
         JSON Raw Response:
         {{
@@ -61,6 +72,16 @@ public class CorePrompts
         - The JSON response contains only extracted data exactly as found in the image, without alterations or inferred details. Do not add words, reword, or structure data beyond its original form.
         - Ensure each property is represented in natural language, which will be used for Azure AI Search. Do *not* use fragmented sentences or phrases. 
 
+          Here are examples of how some of how marking data is worded in the database:
+            - Tour 900 in white in black line
+            - (long arrow) Tour (long arrow)
+            - (arrow) U3 (arrow) with line above and below
+            - (arrow) Tour B X (arrow) with (arrows) in black/yellow
+            - Alignment lines in various colors
+            - Staff Model B in white in split black line
+            - < Super Soft in white in black bar >
+
+        Try to use these examples as a refrence to format your markings response
 
         Here are the JSON objects from the extraction process:
 
