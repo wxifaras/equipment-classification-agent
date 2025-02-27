@@ -8,7 +8,6 @@ using Newtonsoft.Json.Schema.Generation;
 using Newtonsoft.Json.Linq;
 using Azure.Search.Documents;
 using System.Text.Json;
-using Newtonsoft.Json.Schema;
 
 namespace equipment_classification_agent_api.Services;
 
@@ -91,7 +90,7 @@ public class AzureOpenAIService : IAzureOpenAIService
         //Create chat completion options
         var options = new ChatCompletionOptions
         {
-            Temperature = 0,
+            Temperature = (float)0.7,
             MaxOutputTokenCount = 800,
             FrequencyPenalty = 0,
             PresencePenalty = 0,
@@ -141,16 +140,14 @@ public class AzureOpenAIService : IAzureOpenAIService
 
         try
         {
-            string golfBallDetailsJson = JsonSerializer.Serialize(golfBallDetails, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var golfBallDetailsJson = JsonSerializer.Serialize(golfBallDetails, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             var options = new ChatCompletionOptions
             {
-                Temperature = 0,
+                Temperature = (float)0.7,
                 MaxOutputTokenCount = 800,
                 FrequencyPenalty = 0,
                 PresencePenalty = 0
-
             };
-
 
             // 2nd LLM call for NLP query
             var nlpPrompt = CorePrompts.GetNlpPrompt(golfBallDetailsJson);
