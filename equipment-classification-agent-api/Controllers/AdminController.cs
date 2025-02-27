@@ -56,4 +56,29 @@ public class AdminController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+
+    [MapToApiVersion("1.0")]
+    [HttpDelete("indexing")]
+    [Consumes(MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> DeleteAISearchIndex()
+    {
+        try
+        {
+            _logger.LogInformation("Deleting AI search index");
+
+            await _azureAISearchService.DeleteAISearchIndexAsync();
+
+            _logger.LogInformation("AI search index deleted");
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in DeleteAISearchIndex");
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
 }

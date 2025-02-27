@@ -7,6 +7,7 @@ using Azure.Search.Documents.Models;
 using Azure.Search.Documents;
 using OpenAI.Embeddings;
 using System.Diagnostics;
+using Azure;
 
 namespace equipment_classification_agent_api.Services;
 
@@ -23,6 +24,8 @@ public interface IAzureAISearchService
            bool hybrid = true,
            bool semantic = false,
            double minRerankerScore = 2.0);
+
+    Task DeleteAISearchIndexAsync();
 }
 
 public class AzureAISearchService : IAzureAISearchService
@@ -147,16 +150,6 @@ public class AzureAISearchService : IAzureAISearchService
                 }
             };
 
-            var indexNames = _indexClient.GetIndexNames();
-
-            // Check if the specified index exists
-            bool indexExists = indexNames.Contains(_indexName);
-
-            if (indexExists)
-            {
-                await _indexClient.DeleteIndexAsync(_indexName).ConfigureAwait(false);
-            }
-
             await _indexClient.CreateOrUpdateIndexAsync(searchIndex).ConfigureAwait(false);
 
             _logger.LogInformation($"Completed creating index {searchIndex}");
@@ -164,6 +157,27 @@ public class AzureAISearchService : IAzureAISearchService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating AI search index.");
+            throw;
+        }
+    }
+
+    public async Task DeleteAISearchIndexAsync()
+    {
+        try
+        {
+            // Attempt to delete the index
+            await _indexClient.DeleteIndexAsync(_indexName).ConfigureAwait(false);
+            _logger.LogInformation($"Index '{_indexName}' deleted successfully.");
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            // Handle the case where the index does not exist
+            _logger.LogWarning($"Index '{_indexName}' does not exist. No deletion performed.");
+        }
+        catch (Exception ex)
+        {
+            // Handle other exceptions
+            _logger.LogError(ex, $"An error occurred while deleting the index '{_indexName}'.");
             throw;
         }
     }
