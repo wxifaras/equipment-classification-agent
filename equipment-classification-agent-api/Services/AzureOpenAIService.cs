@@ -8,6 +8,7 @@ using Newtonsoft.Json.Schema.Generation;
 using Newtonsoft.Json.Linq;
 using Azure.Search.Documents;
 using System.Text.Json;
+using Newtonsoft.Json.Schema;
 
 namespace equipment_classification_agent_api.Services;
 
@@ -90,7 +91,7 @@ public class AzureOpenAIService : IAzureOpenAIService
         //Create chat completion options
         var options = new ChatCompletionOptions
         {
-            Temperature = (float)0.7,
+            Temperature = 0,
             MaxOutputTokenCount = 800,
             FrequencyPenalty = 0,
             PresencePenalty = 0,
@@ -141,21 +142,30 @@ public class AzureOpenAIService : IAzureOpenAIService
         try
         {
             string golfBallDetailsJson = JsonSerializer.Serialize(golfBallDetails, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var options = new ChatCompletionOptions
+            {
+                Temperature = 0,
+                MaxOutputTokenCount = 800,
+                FrequencyPenalty = 0,
+                PresencePenalty = 0
+
+            };
+
 
             // 2nd LLM call for NLP query
             var nlpPrompt = CorePrompts.GetNlpPrompt(golfBallDetailsJson);
-                
+
             var messages = new List<OpenAI.Chat.ChatMessage>
             {
-                new SystemChatMessage(nlpPrompt)                 
+                new SystemChatMessage(nlpPrompt)
             };
 
-            ChatCompletion completion = await chatClient.CompleteChatAsync(messages);
-            
+            ChatCompletion completion = await chatClient.CompleteChatAsync(messages, options);
+
             var nlpQuery = completion.Content[0].Text;
-            
+
             var filter = $"colour eq '{golfBallDetails?.colour}'";
-            
+
             if (!string.IsNullOrEmpty(golfBallDetails?.manufacturer))
             {
                 var manufacturer = golfBallDetails.manufacturer.Trim();

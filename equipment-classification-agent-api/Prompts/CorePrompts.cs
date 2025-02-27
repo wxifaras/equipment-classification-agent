@@ -13,6 +13,7 @@ public class CorePrompts
         - **Never describe symbols as words** (e.g., do not say `angle bracket around something` or `pipes surrounding something`).
         - If markings are** partially obscured** or **run off the ball**, ignore them rather than making assumptions.
         - Maintain** consistent results** across multiple evaluations.
+        - **Replace any dot (`.`) with `?` in the extracted markings.**
         
         ### Instructions:
         1. **Manufacturer**: Identify the golf ball manufacturer.
@@ -28,17 +29,7 @@ public class CorePrompts
            - Capture special characters without rewording or describing them.
            - Maintain** original order and spacing**.  
            - Store the result in the 'markings' field.
-
-         Here are examples of how some of how marking data is worded in the database:
-            - Tour 900 in white in black line
-            - (long arrow) Tour (long arrow)
-            - (arrow) U3 (arrow) with line above and below
-            - (arrow) Tour B X (arrow) with (arrows) in black/yellow
-            - Alignment lines in various colors
-            - Staff Model B in white in split black line
-            - < Super Soft in white in black bar >
-
-        Try to use these examples as a refrence to format your markings response
+           - **Replace all dots (`.`) with `?`.**
 
         ### JSON Response Format:
         JSON Raw Response:
@@ -58,12 +49,14 @@ public class CorePrompts
         - **Do not infer, assume, or add missing data.**
         - If markings conflict across images, select the **most accurate** version.
         - Preserve **original text and symbols exactly** without paraphrasing.
+        - **Replace any dot (`.`) with `?` in the extracted markings.**
     
      Instructions:
         - The **manufacturer** must match one of the manufacturers from the following list: {manufacturers}. If there is no match, or you are not sure, you **must** set the manufacturer as 'unknown'.
         - The color should be the most representative color based on the image and the data.
         - For the markings, ensure you capture any relevant text and symbols exactly as they appear, with their corresponding colors. If there are any conflicting markings, choose the one that best represents the ball's appearance.
         - In the case of duplicate markings, consolidate or choose the most accurate version.
+        - **Replace all dots (`.`) with `?` in the extracted markings.**
         
         Based on the provided JSON objects and what you see in the images, please return a consolidated JSON response that best represents the image and provides the most accurate and detailed information about the golf ball, including:
         - The manufacturer of the golf ball.
@@ -71,17 +64,6 @@ public class CorePrompts
         - The markings on the ball.
         - The JSON response contains only extracted data exactly as found in the image, without alterations or inferred details. Do not add words, reword, or structure data beyond its original form.
         - Ensure each property is represented in natural language, which will be used for Azure AI Search. Do *not* use fragmented sentences or phrases. 
-
-          Here are examples of how some of how marking data is worded in the database:
-            - Tour 900 in white in black line
-            - (long arrow) Tour (long arrow)
-            - (arrow) U3 (arrow) with line above and below
-            - (arrow) Tour B X (arrow) with (arrows) in black/yellow
-            - Alignment lines in various colors
-            - Staff Model B in white in split black line
-            - < Super Soft in white in black bar >
-
-        Try to use these examples as a refrence to format your markings response
 
         Here are the JSON objects from the extraction process:
 
