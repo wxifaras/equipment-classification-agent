@@ -1,0 +1,12 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "manufacturer": { "type": "string" },
+        "colour": { "type": "string" },
+        "markings": { "type": "string" },
+        "thought_process": { "type": "string" },
+        "brand_explanation": { "type": "string" },
+        "tags_explanation": { "type": "string" }
+    }
+}
