@@ -1,5 +1,4 @@
 ﻿namespace equipment_classification_agent_api.Prompts;
-
 public class CorePrompts
 {
     public static string GetImageMarkingsExtractionsPrompt(string manufacturers) => $@"
@@ -45,7 +44,6 @@ public class CorePrompts
            - Explain the logic behind the inclusion or exclusion of tags surrounding the text.
            - If certain words, phrases, or sections are tagged, describe the conditions that trigger their appearance.
            - If tags are omitted in some cases, explain why they are not required in those instances.
-           
 
         ### JSON Response Format:
         JSON Raw Response:
@@ -130,4 +128,3 @@ public class CorePrompts
         JSON:
         {json}";
 }
-
