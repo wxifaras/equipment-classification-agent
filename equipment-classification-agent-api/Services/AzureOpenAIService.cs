@@ -4,8 +4,6 @@ using equipment_classification_agent_api.Models;
 using Microsoft.Extensions.Options;
 using equipment_classification_agent_api.Prompts;
 using OpenAI.Chat;
-using Newtonsoft.Json.Schema.Generation;
-using Newtonsoft.Json.Linq;
 using Azure.Search.Documents;
 using System.Text.Json;
 
@@ -84,8 +82,8 @@ public class AzureOpenAIService : IAzureOpenAIService
             }.Concat(imageUrlList.Select(url => ChatMessageContentPart.CreateImagePart(new Uri(url), imageDetailLevel))).ToList())
         };
 
-        var generator = new JSchemaGenerator();
-        var jsonSchema = generator.Generate(typeof(GolfBallLLMDetail)).ToString();
+        var schemaFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Models", "GolfBallLLMDetail.json");
+        var jsonSchema = File.ReadAllText(schemaFilePath);
 
         //Create chat completion options
         var options = new ChatCompletionOptions
@@ -105,14 +103,15 @@ public class AzureOpenAIService : IAzureOpenAIService
 
         try
         {
-            // Print the response
             if (completion.Content != null && completion.Content.Count > 0)
             {
                 _logger.LogInformation($"Result: {completion.Content[0].Text}");
                 jsonResponse = $"{completion.Content[0].Text}";
 
-                var jsonObject = JObject.Parse(jsonResponse);
-                golfBallDetail = jsonObject.ToObject<GolfBallLLMDetail>();
+                golfBallDetail = JsonSerializer.Deserialize<GolfBallLLMDetail>(jsonResponse, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
 
                 if (_enableChatHistory)
                 {

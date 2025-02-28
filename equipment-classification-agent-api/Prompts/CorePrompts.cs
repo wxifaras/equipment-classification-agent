@@ -11,13 +11,12 @@ public class CorePrompts
         - **Do not rephrase, assume, infer, or add characters that do not appear in the image.**
         - If symbols enclose a word (e.g., `< word >`, `| word |`), return them exactly as they appear.
         - **Never describe symbols as words** (e.g., do not say `angle bracket around something` or `pipes surrounding something`).
-        - If markings are **partially obscured** or **run off the ball**, ignore them rather than making assumptions.
-        - Maintain **consistent results** across multiple evaluations.
+        - If markings are** partially obscured** or **run off the ball**, ignore them rather than making assumptions.
+        - Maintain** consistent results** across multiple evaluations.
         
         ### Instructions:
         1. **Manufacturer**: Identify the golf ball manufacturer.
-           - The manufacturer **must** match one of the following: {manufacturers}.
-           - You **must not infer the manufacturer** from information extracted from the images.
+           - The manufacturer **must** match one of the following: {manufacturers}.  
            - If no match is found, **return 'unknown'**.
            - Store the result in the 'manufacturer' field of the JSON.
 
@@ -34,6 +33,19 @@ public class CorePrompts
            - Provide a brief explanation of your thought process in the 'thought_process' field. 
            - And how you are determining manufacturer, colour, and markings.
            - Provide any additional context that may help the next analyst understand your reasoning.
+           - If you are identifying a brand that is associated with the manufacturer. Explain, how you are getting this knowledge ?
+
+        5. **Brand Explanation**:
+           - Provide a explanation of how you are identifying the brand in the 'brand_explanation' field. 
+           - Provide details on how you are determining the manufacturer for this brand. 
+           - Explain, from where you are getting this knowledge from been able to confindently able to associate brand with the manufacturer.
+        
+        6. **Tags Explanation**:
+           - In the tags_explanation field, provide a clear breakdown of when and why the symbols (tags) appear or do not appear in the LLM response.
+           - Explain the logic behind the inclusion or exclusion of tags surrounding the text.
+           - If certain words, phrases, or sections are tagged, describe the conditions that trigger their appearance.
+           - If tags are omitted in some cases, explain why they are not required in those instances.
+           
 
         ### JSON Response Format:
         JSON Raw Response:
@@ -41,7 +53,9 @@ public class CorePrompts
             \""manufacturer\"": \""some manufacturer\"",
             \""color\"": \""some color\"",
             \""markings\"": \""some markings\""
-            \""thought_process\"": \""explanation of thought process\""
+            \""thought_process\"": \""explanation of thought process\"",
+            \""brand_explanation\"": \""explanation of brand selection\"",
+            \""tags_explanation\"": \""explanation on how tags are shown or omitted in the response \"",
         }}";
 
     public static string GetFinalImageMarkingsExtractionsPrompt(string manufacturers, string json_list) => $@"
@@ -73,17 +87,30 @@ public class CorePrompts
         - And how you are determining manufacturer, colour, and markings.
         - Provide any additional context that may help the next analyst understand your reasoning.
 
+         ###Brand Explanation:
+           - Provide a explanation of how you are identifying the brand in the 'brand_explanation' field. 
+           - Provide details on how you are determining the manufacturer for this brand. 
+           - Explain, from where you are getting this knowledge from been able to confindently able to associate brand with the manufacturer.
+
+        ### Tags Explanation:
+           - In the tags_explanation field, provide a clear breakdown of when and why the symbols (tags) appear or do not appear in the LLM response.
+           - Explain the logic behind the inclusion or exclusion of tags surrounding the text.
+           - If certain words, phrases, or sections are tagged, describe the conditions that trigger their appearance.
+           - If tags are omitted in some cases, explain why they are not required in those instances.
+
         Here are the JSON objects from the extraction process:
 
         {json_list}
 
         ### JSON Response Format:
         JSON Raw Response:
-        {{
+       {{
             \""manufacturer\"": \""some manufacturer\"",
             \""color\"": \""some color\"",
-            \""markings\"": \""some markings\"",
-            \""thought_process\"": \""explanation of thought process\""
+            \""markings\"": \""some markings\""
+            \""thought_process\"": \""explanation of thought process\"",
+            \""brand_explanation\"": \""explanation of brand selection\"",
+            \""tags_explanation\"": \""explanation on how tags are shown or omitted in the response \"",
         }}";
 
     public static string GetNlpPrompt(string json) => $@"
@@ -103,3 +130,4 @@ public class CorePrompts
         JSON:
         {json}";
 }
+
