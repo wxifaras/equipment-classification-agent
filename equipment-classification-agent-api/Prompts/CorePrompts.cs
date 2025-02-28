@@ -3,78 +3,97 @@
 public class CorePrompts
 {
     public static string GetImageMarkingsExtractionsPrompt(string manufacturers) => $@"
-        Your task is to analyze one or more pictures of a golf ball and extract details from the images. Ensure that **all text, markings, 
-        and symbols** (such as arrows, angle brackets, lines, or other characters) along with their colors, **are included exactly as they appear** if
-        they can be represented by a character. Do **not** rephrase or describe any symbols, including angle brackets, carets, percent signs, etc.
-        If you encounter a symbol like this angle bracket ('>') or this angle bracket ('<'), percent symbol ('%'), ampersand ('&'), 
-        or any other character enclosing a word (e.g., < word >, | word |, - word -), **return these symbols exactly as they appear**, **you must not add characters or symbols that do not appear in the images**.
-        If you see the text '< something >' or '| something |', you must return it as '< something >' and '| something |',
-        without describing them as \""angle brackets around the word something\"" or \""pipes surrounding the word something\"". Do **not** describe these symbols
-        as words (e.g., 'angle bracket', 'percent' or 'ampersand'). It is also critical that you capture the color of any symbol. For example, if you see
-        a red arrow underneath the text 'Titleist Pro V1', you will return 'Titleist Pro V1 with a red arrow underneath'. 
-        If markings are partially obscured or run off of the ball, do not make any assumptions about what they are.         
-        You **must** ignore any markings that you cannot 100% identify. Do not change order of the markings or text. Do not remove spaces.
-                
+        Your task is to analyze one or more pictures of a golf ball and extract details from the images with a **hallucination score strictly less than 1**. 
+        
+        **Key Requirements:**
+        - Extract **all text, markings, and symbols** (arrows, angle brackets, lines, etc.) along with their colors **exactly as they appear**.
+        - **Angle brackets ('<', '>') must never be missed if present on the ball.**
+        - **Do not rephrase, assume, infer, or add characters that do not appear in the image.**
+        - If symbols enclose a word (e.g., `< word >`, `| word |`), return them exactly as they appear.
+        - **Never describe symbols as words** (e.g., do not say `angle bracket around something` or `pipes surrounding something`).
+        - If markings are **partially obscured** or **run off the ball**, ignore them rather than making assumptions.
+        - Maintain **consistent results** across multiple evaluations.
+        
         ### Instructions:
-        1. **Manufacturer**: Identify the name of the golf ball manufacturer. 
-            The manufacturer **must** match one of the manufacturers from the following list: {manufacturers}. 
-            If there is no match, or you are not sure, you **must** set the manufacturer as 'unknown'.
-            Store your findings in the 'manufacturer' property of the JSON structure below.
+        1. **Manufacturer**: Identify the golf ball manufacturer.
+           - The manufacturer **must** match one of the following: {manufacturers}.
+           - You **must not infer the manufacturer** from information extracted from the images.
+           - If no match is found, **return 'unknown'**.
+           - Store the result in the 'manufacturer' field of the JSON.
 
-        2. **Color**: Identify the color of the ball. Store the color in the 'color' property of the JSON structure below.
+        2. **Color**: Identify the golf ball's primary color.  
+           - Store it in the 'color' field.
 
-        3. **Markings**: Identify any text or a combination of text and symbols on the picture. If there are symbols near or around text, capture the **exact symbol** along with its color and the letters
-           it surrounds. For example, '< something >' should be returned as '< something >'. You **must** ignore any markings that you cannot 100% identify. For example, if markings are
-           partially obscured or run off of the ball, don't make any assumptions about what they are. Pay special attention to the edge of the ball where markings may run off.
-           Store your findings in the 'markings' property of the JSON structure below. Remember to include the symbols exactly as they appear, without describing them.
+        3. **Markings**: Extract** all visible text and symbols** exactly as they appear.  
+           - **Do not omit `<` brackets if they are present.**
+           - Capture special characters without rewording or describing them.
+           - Maintain** original order and spacing**.  
+           - Store the result in the 'markings' field.
+        
+        4. **Thought Process**: 
+           - Provide a brief explanation of your thought process in the 'thought_process' field. 
+           - And how you are determining manufacturer, colour, and markings.
+           - Provide any additional context that may help the next analyst understand your reasoning.
 
-        ### JSON Raw Response:
-        {{     
+        ### JSON Response Format:
+        JSON Raw Response:
+        {{
             \""manufacturer\"": \""some manufacturer\"",
-            \""color\"": \""yellow\"",
-            \""markings\"": \""markings\""
+            \""color\"": \""some color\"",
+            \""markings\"": \""some markings\""
+            \""thought_process\"": \""explanation of thought process\""
         }}";
 
     public static string GetFinalImageMarkingsExtractionsPrompt(string manufacturers, string json_list) => $@"
         You have received multiple JSON objects representing different color, manufacturer, markings, details, and information extracted from images of a golf ball. 
-        Your task is to analyze and consolidate all the information into a single JSON object that best represents the golf ball's features from the images provided. 
-        Carefully combine the data, remove any duplicates, and provide the most relevant details. Do **not** rephrase or describe any symbols, including angle brackets,
-        carets, percent signs, etc. If you see a an angle bracket ('>') or this angle bracket ('<'), percent symbol ('%') or an ampersand ('&'), return them as '>' '<' '%', '&', etc.
-        Do **not** describe these symbols as words (e.g., 'angle bracket', 'percent' or 'ampersand'). Do not change order of the markings or text. Do not remove spaces.
-
-        Here are the JSON objects from the extraction process:
-
-        {json_list}
-
-        Instructions:
-        - The manufacturer **must** match one of the manufacturers from the following list: {manufacturers}. If there is no match, or you are not sure, you **must** set the manufacturer as 'unknown'.
+        Your task is to **consolidate the most accurate information** while maintaining **consistency** and ensuring a **hallucination score less than 1** .
+        
+        **Critical Rules:**
+        - **Angle brackets ('<', '>') must never be missed.**
+        - **Maintain consistency** across repeated analyses.
+        - **Do not infer, assume, or add missing data.**
+        - If markings conflict across images, select the **most accurate** version.
+        - Preserve **original text and symbols exactly** without paraphrasing.
+    
+        ### Instructions:
+        - The **manufacturer** must match one of the manufacturers from the following list: {manufacturers}. If there is no match, or you are not sure, you **must** set the manufacturer as 'unknown'.
         - The color should be the most representative color based on the image and the data.
         - For the markings, ensure you capture any relevant text and symbols exactly as they appear, with their corresponding colors. If there are any conflicting markings, choose the one that best represents the ball's appearance.
         - In the case of duplicate markings, consolidate or choose the most accurate version.
         
-        Based on the provided JSON objects and what you see in the images, please return a consolidated JSON response that best represents the image and provides the most accurate and detailed information about the golf ball, including:
+        ### Based on the provided JSON objects and what you see in the images, please return a consolidated JSON response that best represents the image and provides the most accurate and detailed information about the golf ball, including:
         - The manufacturer of the golf ball.
         - The color of the ball.
         - The markings on the ball.
         - The JSON response contains only extracted data exactly as found in the image, without alterations or inferred details. Do not add words, reword, or structure data beyond its original form.
         - Ensure each property is represented in natural language, which will be used for Azure AI Search. Do *not* use fragmented sentences or phrases. 
 
-        The JSON response should be structured as follows:
-        
+        ### Thought Process: 
+        - Provide a brief explanation of your thought process in the 'thought_process' field. 
+        - And how you are determining manufacturer, colour, and markings.
+        - Provide any additional context that may help the next analyst understand your reasoning.
+
+        Here are the JSON objects from the extraction process:
+
+        {json_list}
+
+        ### JSON Response Format:
         JSON Raw Response:
         {{
             \""manufacturer\"": \""some manufacturer\"",
             \""color\"": \""some color\"",
-            \""markings\"": \""some markings\""
+            \""markings\"": \""some markings\"",
+            \""thought_process\"": \""explanation of thought process\""
         }}";
 
     public static string GetNlpPrompt(string json) => $@"
-        Given the JSON at the bottom, you must extract only the markings field and convert this value into an Azure AI Search natural language processing (NLP) query. Ensure the output is a concise
+        Given the JSON at the bottom, you must extract  the **markings** field and convert this value into an **Azure AI Search natural language processing (NLP) query**. Ensure the output is a concise
         and in a complete sentence suitable for search input.
         
-        Instructions:
-        - You must only use the markings field from the JSON; ignore the manufacturer and color fields.
-        - You must **not** remove any special characters such as percent symbols ('%'), ampersands ('&'), double angle brackets ('<< >>'), or single angle brackets ('< >') as these are critical to the search.
+        ### Instructions:
+        - You must **only use** the markings field from the JSON; ignore the manufacturer and color fields.
+        - **Do not remove** any special characters such as percent symbols ('%'), ampersands ('&'), double angle brackets ('<< >>'), or single angle brackets ('< >') as these are critical to the search.
+        - **Do not modify the original wording, symbols, or spacing**.
         - You must add quotes to important phrases or keywords that should be treated as a single entity in the search query. 
           You must add a + sign to the front of the phrase to indicate that it is a required term.
           For example, if the query is ""Find the best restaurants in New York,"" the result should be: +""best"" +""restaurants"" in +""New York""

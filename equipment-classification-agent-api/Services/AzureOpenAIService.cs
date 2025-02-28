@@ -140,22 +140,29 @@ public class AzureOpenAIService : IAzureOpenAIService
 
         try
         {
-            string golfBallDetailsJson = JsonSerializer.Serialize(golfBallDetails, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var golfBallDetailsJson = JsonSerializer.Serialize(golfBallDetails, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var options = new ChatCompletionOptions
+            {
+                Temperature = (float)0.7,
+                MaxOutputTokenCount = 800,
+                FrequencyPenalty = 0,
+                PresencePenalty = 0
+            };
 
             // 2nd LLM call for NLP query
             var nlpPrompt = CorePrompts.GetNlpPrompt(golfBallDetailsJson);
-                
+
             var messages = new List<OpenAI.Chat.ChatMessage>
             {
-                new SystemChatMessage(nlpPrompt)                 
+                new SystemChatMessage(nlpPrompt)
             };
 
-            ChatCompletion completion = await chatClient.CompleteChatAsync(messages);
-            
+            ChatCompletion completion = await chatClient.CompleteChatAsync(messages, options);
+
             var nlpQuery = completion.Content[0].Text;
-            
+
             var filter = $"colour eq '{golfBallDetails?.colour}'";
-            
+
             if (!string.IsNullOrEmpty(golfBallDetails?.manufacturer))
             {
                 var manufacturer = golfBallDetails.manufacturer.Trim();
