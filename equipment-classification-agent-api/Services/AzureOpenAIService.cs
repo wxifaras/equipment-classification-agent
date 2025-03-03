@@ -6,6 +6,7 @@ using equipment_classification_agent_api.Prompts;
 using OpenAI.Chat;
 using Azure.Search.Documents;
 using System.Text.Json;
+using System.Drawing;
 
 namespace equipment_classification_agent_api.Services;
 
@@ -160,7 +161,16 @@ public class AzureOpenAIService : IAzureOpenAIService
 
             var nlpQuery = completion.Content[0].Text;
 
-            var filter = $"colour eq '{golfBallDetails?.colour}'";
+            var filter = string.Empty;
+            if (golfBallDetails.colour.Contains('/'))
+            {
+                var ballColors = golfBallDetails.colour.Split('/');
+                filter = $"colour eq '{ballColors[0].ToLower()}/{ballColors[1].ToLower()}' or colour eq '{ballColors[1].ToLower()}/{ballColors[0].ToLower()}'";
+            }
+            else
+            {
+                filter = $"colour eq '{golfBallDetails?.colour.ToLower()}'";
+            }
 
             if (!string.IsNullOrEmpty(golfBallDetails?.manufacturer))
             {
