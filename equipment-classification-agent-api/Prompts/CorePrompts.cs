@@ -30,6 +30,7 @@ public class CorePrompts
            - Avoid using angle brackets (`<`, `>`) or other symbols (e.g., `|`, `-`) unless they are visibly part of the markings in the image. Do not recreate the symbol with characters. Instead, describe the shape, direction, and type of the symbol in words.
            - Maintain **exact** order and spacing of markings int he result, but use words to describe symbols, not characters.
            - Descriptions of symbols should be precise and unambiguous. Avoid converting symbols into textual forms such as arrows (`<---->` or `-->`).
+           - Describe any backgrounds that the markings are on. For example, if a word is over a black box, you must return that the word you extracted is in a black box.
            - Store the result of both text and symbols in the 'markings' field.
         
         4. **Thought Process**: 
