@@ -165,11 +165,11 @@ public class AzureOpenAIService : IAzureOpenAIService
             if (golfBallDetails.colour.Contains('/'))
             {
                 var ballColors = golfBallDetails.colour.Split('/');
-                filter = $"colour eq '{ballColors[0]}/{ballColors[1]}' or colour eq '{ballColors[1]}/{ballColors[0]}'";
+                filter = $"colour eq '{ballColors[0].ToLower()}/{ballColors[1].ToLower()}' or colour eq '{ballColors[1].ToLower()}/{ballColors[0].ToLower()}'";
             }
             else
             {
-                filter = $"colour eq '{golfBallDetails?.colour}'";
+                filter = $"colour eq '{golfBallDetails?.colour.ToLower()}'";
             }
 
             if (!string.IsNullOrEmpty(golfBallDetails?.manufacturer))
