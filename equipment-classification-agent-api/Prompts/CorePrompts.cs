@@ -17,7 +17,7 @@ public class CorePrompts
         
         ### Instructions:
         1. **Manufacturer**
-           - Attempt to match the manufacturer from this list {manufacturers} with only the text extracted from the image. **Do not** use your pretrained knowledge to infer or associate markings on the ball with a manufacturer in the list. If no match is found then you must set the 'manufacturer' field of the JSON to 'unknown'. Don't use any of your pretrained knowledge to infer who the manufacturer is.  
+           - Attempt to match the manufacturer from this list {manufacturers} with only the text extracted from the image- don't use your pretrained knowledge to infer. If no match is found then you must set the 'manufacturer' field of the JSON to 'unknown'. Don't use any of your pretrained knowledge to infer who the manufacturer is.  
            - Store the result in the 'manufacturer' field of the JSON.
 
         2. **Color**: Identify the golf ball's primary color.  
