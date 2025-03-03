@@ -5,30 +5,32 @@ public class CorePrompts
         Your task is to analyze one or more pictures of a golf ball and extract details from the images with a **hallucination score strictly less than 1**. 
         
         **Key Requirements:**
-        - Extract **all text, markings, and symbols** (arrows, angle brackets, lines, etc.) along with their colors **exactly as they appear**.
-        - **Angle brackets ('<', '>') must never be missed if present on the ball.**
+        - Extract markings such as **text, special characters, and symbols (arrows, angle brackets, lines, etc.)**  along with their colors **exactly as they appear**.
         - **Do not rephrase, assume, infer, or add characters that do not appear in the image.**
-        - If symbols enclose a word (e.g., `< word >`, `| word |`), return them exactly as they appear.
-        - **Never describe symbols as words** (e.g., do not say `angle bracket around something` or `pipes surrounding something`).
-        - If markings are** partially obscured** or **run off the ball**, ignore them rather than making assumptions.
-        - Maintain** consistent results** across multiple evaluations.
-        - Don't associated any text or marking with, or as, a brand or manufacturer.
-        - Don't associate any of the syle or content of the image to a brand or manufacturer.
-        - Don't associate any brand with a manufacture.
+        - If special characters enclose a word (e.g., `< word >`, `| word |`), return them exactly as they appear.
+        - **Never describe special characters as words** (e.g., do not return `angle bracket around something` or `pipes surrounding something`).
+        - If markings are **partially obscured** or **run off the ball**, ignore them rather than making assumptions.
+        - Maintain **consistent results** across multiple evaluations.
+        - Don't infer or associate any text or marking with, or as, a brand or manufacturer.
+        - Don't infer or associate any of the syle or content of the image to a brand or manufacturer.
+        - Don't infer or associate any brand with a manufacture.
         
         ### Instructions:
         1. **Manufacturer**
-           - Attempt to match the manufacturer from this list {manufacturers} with only the text extracted from the image- don't use your pretrained knowledge to infer. If no match is found then you must set the 'manufacturer' field of the JSON to 'unknown'. Don't use any of your pretrained knowledge to infer who the manufacturer is.  
+           - Attempt to match the manufacturer from this list {manufacturers} with only the text extracted from the image. **Do not** use your pretrained knowledge to infer or associate markings on the ball with a manufacturer in the list. If no match is found then you must set the 'manufacturer' field of the JSON to 'unknown'. Don't use any of your pretrained knowledge to infer who the manufacturer is.  
            - Store the result in the 'manufacturer' field of the JSON.
 
         2. **Color**: Identify the golf ball's primary color.  
            - Store it in the 'color' field.
 
-        3. **Markings**: Extract** all visible text and symbols** exactly as they appear.  
-           - **Do not omit `<` brackets if they are present.**
-           - Capture special characters without rewording or describing them.
-           - Maintain** original order and spacing**.  
-           - Store the result in the 'markings' field.
+        3. **Markings**: Extract **all visible text and symbols**
+           - This will fall into two categories: 1) alphanumeric text which can be represented with characters and 2) symbols such as arrows or lines
+           - For alphanumeric text, you must return this **exactly as they are shown**. This includes any characters which can be represented such as letters, <, >, !, @, #, $, %, ^, &, etc. Be sure that you don't
+           - For symbols, describe them using words instead of textual representations. For example, describe an arrow as ""arrow pointing left,"" ""hollow arrow pointing right,"" or ""solid arrow pointing up"" based on its appearance.
+           - Avoid using angle brackets (`<`, `>`) or other symbols (e.g., `|`, `-`) unless they are visibly part of the markings in the image. Do not recreate the symbol with characters. Instead, describe the shape, direction, and type of the symbol in words.
+           - Maintain **exact** order and spacing of markings int he result, but use words to describe symbols, not characters.
+           - Descriptions of symbols should be precise and unambiguous. Avoid converting symbols into textual forms such as arrows (`<---->` or `-->`).
+           - Store the result of both text and symbols in the 'markings' field.
         
         4. **Thought Process**: 
            - Provide a brief explanation of your thought process in the 'thought_process' field. 
