@@ -90,7 +90,7 @@ public class CorePrompts
         - And how you are determining manufacturer, colour, and markings.
         - Provide any additional context that may help the next analyst understand your reasoning.
 
-         ###Brand Explanation:
+         ### Brand Explanation:
            - Provide a explanation of how you are identifying the brand in the 'brand_explanation' field. 
            - Provide details on how you are determining the manufacturer for this brand. 
            - Explain, from where you are getting this knowledge from been able to confindently able to associate brand with the manufacturer.
