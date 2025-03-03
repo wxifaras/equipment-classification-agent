@@ -18,7 +18,7 @@ public class CorePrompts
         
         ### Instructions:
         1. **Manufacturer**
-           - Attempt to match the manufacturer from this list {manufacturers} with only the text extracted from the image- don't use your pretrained knowledge to infer. If no match is found then you must set the 'manufacturer' field of the JSON to 'unknown'. Don't use any of your pretrained knowledge to infer who the manufacturer is.  
+           - I want to find a word in this list {manufacturers} that is similar to one of the text words extracted from the golf ball image. By 'similar', I mean a word or phrase that contains the same word that you searched for. If no match is found then you must set the 'manufacturer' field of the JSON to 'unknown'.                 
            - Store the result in the 'manufacturer' field of the JSON.
 
         2. **Color**: Identify the golf ball's primary color.  
