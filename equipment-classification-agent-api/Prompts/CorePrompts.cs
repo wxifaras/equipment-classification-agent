@@ -17,11 +17,12 @@ public class CorePrompts
         
         ### Instructions:
         1. **Manufacturer**
-           - Attempt to match the manufacturer from this list {manufacturers} with only the text extracted from the image- don't use your pretrained knowledge to infer. If no match is found then you must set the 'manufacturer' field of the JSON to 'unknown'. Don't use any of your pretrained knowledge to infer who the manufacturer is.  
+           - Attempt to match the manufacturer from this list {manufacturers} with only the text extracted from the image - don't use your pretrained knowledge to infer or associate text with a manufacturer. If no match is found then you must set the 'manufacturer' field of the JSON to 'unknown'. Don't use any of your pretrained knowledge to infer who the manufacturer is.  
            - Store the result in the 'manufacturer' field of the JSON.
 
         2. **Color**: Identify the golf ball's primary color.  
            - Store it in the 'color' field.
+           - If you encounter more than one prominent color, return all colors separated by a / character. For example, if you have a yellow, red, and orange ball, you will return yellow/red/orange.
 
         3. **Markings**: Extract **all visible text and symbols**
            - This will fall into two categories: 1) alphanumeric text which can be represented with characters and 2) symbols such as arrows or lines
@@ -90,7 +91,7 @@ public class CorePrompts
         - And how you are determining manufacturer, colour, and markings.
         - Provide any additional context that may help the next analyst understand your reasoning.
 
-         ###Brand Explanation:
+        ### Brand Explanation:
            - Provide a explanation of how you are identifying the brand in the 'brand_explanation' field. 
            - Provide details on how you are determining the manufacturer for this brand. 
            - Explain, from where you are getting this knowledge from been able to confindently able to associate brand with the manufacturer.
