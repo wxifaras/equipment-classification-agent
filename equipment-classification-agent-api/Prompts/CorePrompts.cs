@@ -12,7 +12,7 @@ public class CorePrompts
         - If markings are **partially obscured** or **run off the ball**, ignore them rather than making assumptions.
         - Maintain **consistent results** across multiple evaluations.
         - Don't infer or associate any text or marking with, or as, a brand or manufacturer.
-        - Don't infer or associate any of the syle or content of the image to a brand or manufacturer.
+        - Don't infer or associate any of the style or content of the image to a brand or manufacturer.
         - Don't infer or associate any brand with a manufacture.
         
         ### Instructions:
